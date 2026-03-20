@@ -26,6 +26,12 @@ export class GameSettings extends Scene {
     }
 
     create() {
+        // Reset scene state for fresh entry
+        this.menuOptions = [];
+        this.selectedOption = 0;
+        if (this.pulseTween) this.pulseTween.stop();
+        this.pulseTween = undefined;
+
         this.cameras.main.setBackgroundColor(0x000000);
 
         createTransparentTexture(this);
@@ -64,6 +70,8 @@ export class GameSettings extends Scene {
                 if (this.menuOptions.length > 0) this.confirmSelection();
             });
         }
+
+        this.playHighlightSound();
 
         EventBus.emit('current-scene-ready', this);
     }
@@ -194,9 +202,7 @@ export class GameSettings extends Scene {
 
         this.updateSelectionBox();
 
-        if (this.sound.get('menu-highlight')) {
-            this.sound.play('menu-highlight', { volume: 0.5 });
-        }
+        this.playHighlightSound();
     }
 
     private updateSelectionBox() {
@@ -264,10 +270,16 @@ export class GameSettings extends Scene {
         if (selectedLabel === 'RACE') {
             this.sound.stopAll();
             this.scene.start('Game');
+        } else if (selectedLabel === 'NAME') {
+            this.scene.start('PlayerNameScene');
         } else {
-            if (this.sound.get('menu-highlight')) {
-                this.sound.play('menu-highlight', { volume: 0.8 });
-            }
+            this.playHighlightSound();
+        }
+    }
+
+    private playHighlightSound() {
+        if (this.cache.audio.exists('menu-highlight')) {
+            this.sound.play('menu-highlight', { volume: 0.8 });
         }
     }
 }

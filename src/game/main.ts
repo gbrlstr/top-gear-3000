@@ -5,6 +5,7 @@ import { MainMenu } from './scenes/MainMenu';
 import { GameSettings } from './scenes/GameSettings';
 import { AUTO, Game } from 'phaser';
 import { Preloader } from './scenes/Preloader';
+import { PlayerNameScene } from './scenes/PlayerNameScene';
 
 // Find out more information about the Game Config at:
 // https://docs.phaser.io/api-documentation/typedef/types-core#gameconfig
@@ -20,7 +21,8 @@ const config: Phaser.Types.Core.GameConfig = {
         MainMenu,
         GameSettings,
         MainGame,
-        GameOver
+        GameOver,
+        PlayerNameScene
     ],
     physics: {
         default: 'arcade',
