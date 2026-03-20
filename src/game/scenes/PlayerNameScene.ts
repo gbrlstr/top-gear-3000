@@ -5,6 +5,7 @@ import {
     createFontSprite,
     getFontFrame,
 } from '../elements/playerNameFont';
+import { ShutterTransition } from '../elements/shutterTransition';
 
 type GridItem = {
     char: string;
@@ -23,6 +24,7 @@ export class PlayerNameScene extends Phaser.Scene {
 
     private cursorBox!: Phaser.GameObjects.Graphics;
     private nameCursorSprite!: Phaser.GameObjects.Sprite;
+    private shutter!: ShutterTransition;
 
     constructor() {
         super('PlayerNameScene');
@@ -33,6 +35,9 @@ export class PlayerNameScene extends Phaser.Scene {
     }
 
     create(): void {
+        this.shutter = new ShutterTransition(this);
+        this.shutter.enter();
+
         this.cameras.main.setBackgroundColor('#000000');
 
         // Load name from localStorage
@@ -272,7 +277,9 @@ export class PlayerNameScene extends Phaser.Scene {
             const finalName = this.typedName || 'PLAYER';
             this.registry.set('playerName', finalName);
             localStorage.setItem('playerName', finalName);
-            this.scene.start('GameSettings');
+            this.shutter.exit().then(() => {
+                this.scene.start('GameSettings');
+            });
             return;
         } else {
             if (this.typedName.length < this.maxNameLength) {

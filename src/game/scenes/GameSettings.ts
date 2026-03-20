@@ -1,4 +1,5 @@
 import { GameObjects, Scene } from 'phaser';
+import { ShutterTransition } from '../elements/shutterTransition';
 import { EventBus } from '../EventBus';
 import {
     createAnimations,
@@ -16,6 +17,7 @@ export class GameSettings extends Scene {
     monitor!: Phaser.GameObjects.Sprite;
     nebula!: GameObjects.TileSprite;
     pulseTween: Phaser.Tweens.Tween | undefined;
+    private shutter!: ShutterTransition;
 
     constructor() {
         super('GameSettings');
@@ -26,6 +28,9 @@ export class GameSettings extends Scene {
     }
 
     create() {
+        this.shutter = new ShutterTransition(this);
+        this.shutter.enter();
+
         // Reset scene state for fresh entry
         this.menuOptions = [];
         this.selectedOption = 0;
@@ -267,14 +272,16 @@ export class GameSettings extends Scene {
 
         const selectedLabel = this.menuOptions[this.selectedOption].text;
 
-        if (selectedLabel === 'RACE') {
-            this.sound.stopAll();
-            this.scene.start('Game');
-        } else if (selectedLabel === 'NAME') {
-            this.scene.start('PlayerNameScene');
-        } else {
-            this.playHighlightSound();
-        }
+        this.shutter.exit().then(() => {
+            if (selectedLabel === 'RACE') {
+                this.sound.stopAll();
+                this.scene.start('Game');
+            } else if (selectedLabel === 'NAME') {
+                this.scene.start('PlayerNameScene');
+            } else {
+                this.playHighlightSound();
+            }
+        });
     }
 
     private playHighlightSound() {
