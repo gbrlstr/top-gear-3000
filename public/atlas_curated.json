@@ -1,0 +1,609 @@
+{
+  "meta": {
+    "image": "full_sheet_clean.png",
+    "format": "RGBA8888",
+    "scale": "1"
+  },
+  "frames": {
+    "monitor_0": {
+      "frame": {
+        "x": 12,
+        "y": 9,
+        "w": 114,
+        "h": 37
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 114,
+        "h": 37
+      },
+      "sourceSize": {
+        "w": 114,
+        "h": 37
+      }
+    },
+    "dashboard_main": {
+      "frame": {
+        "x": 139,
+        "y": 1,
+        "w": 224,
+        "h": 59
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 224,
+        "h": 59
+      },
+      "sourceSize": {
+        "w": 224,
+        "h": 59
+      }
+    },
+    "hud_speedbar_green": {
+      "frame": {
+        "x": 387,
+        "y": 8,
+        "w": 34,
+        "h": 10
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 34,
+        "h": 10
+      },
+      "sourceSize": {
+        "w": 34,
+        "h": 10
+      }
+    },
+    "hud_speedbar_red": {
+      "frame": {
+        "x": 437,
+        "y": 8,
+        "w": 21,
+        "h": 7
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 7
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 7
+      }
+    },
+    "hud_speedbar_green_2": {
+      "frame": {
+        "x": 387,
+        "y": 22,
+        "w": 33,
+        "h": 7
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 33,
+        "h": 7
+      },
+      "sourceSize": {
+        "w": 33,
+        "h": 7
+      }
+    },
+    "hud_speedbar_red_2": {
+      "frame": {
+        "x": 454,
+        "y": 22,
+        "w": 19,
+        "h": 7
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 19,
+        "h": 7
+      },
+      "sourceSize": {
+        "w": 19,
+        "h": 7
+      }
+    },
+    "hud_speedbar_green_3": {
+      "frame": {
+        "x": 387,
+        "y": 36,
+        "w": 23,
+        "h": 7
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 23,
+        "h": 7
+      },
+      "sourceSize": {
+        "w": 23,
+        "h": 7
+      }
+    },
+    "hud_speedbar_green_4": {
+      "frame": {
+        "x": 387,
+        "y": 50,
+        "w": 32,
+        "h": 10
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 10
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 10
+      }
+    },
+    "hud_speedbar_red_4": {
+      "frame": {
+        "x": 421,
+        "y": 50,
+        "w": 38,
+        "h": 10
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 38,
+        "h": 10
+      },
+      "sourceSize": {
+        "w": 38,
+        "h": 10
+      }
+    },
+    "hud_speedbar_green_5": {
+      "frame": {
+        "x": 387,
+        "y": 64,
+        "w": 27,
+        "h": 7
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 27,
+        "h": 7
+      },
+      "sourceSize": {
+        "w": 27,
+        "h": 7
+      }
+    },
+    "hud_speedbar_green_6": {
+      "frame": {
+        "x": 423,
+        "y": 64,
+        "w": 18,
+        "h": 7
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 18,
+        "h": 7
+      },
+      "sourceSize": {
+        "w": 18,
+        "h": 7
+      }
+    },
+    "hud_speedbar_red_6": {
+      "frame": {
+        "x": 456,
+        "y": 64,
+        "w": 28,
+        "h": 7
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 28,
+        "h": 7
+      },
+      "sourceSize": {
+        "w": 28,
+        "h": 7
+      }
+    },
+    "monitor_1": {
+      "frame": {
+        "x": 13,
+        "y": 65,
+        "w": 113,
+        "h": 42
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 113,
+        "h": 42
+      },
+      "sourceSize": {
+        "w": 113,
+        "h": 42
+      }
+    },
+    "hud_panel_0": {
+      "frame": {
+        "x": 145,
+        "y": 67,
+        "w": 35,
+        "h": 37
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 35,
+        "h": 37
+      },
+      "sourceSize": {
+        "w": 35,
+        "h": 37
+      }
+    },
+    "hud_panel_1": {
+      "frame": {
+        "x": 145,
+        "y": 112,
+        "w": 35,
+        "h": 37
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 35,
+        "h": 37
+      },
+      "sourceSize": {
+        "w": 35,
+        "h": 37
+      }
+    },
+    "monitor_2": {
+      "frame": {
+        "x": 13,
+        "y": 121,
+        "w": 112,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 112,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 112,
+        "h": 47
+      }
+    },
+    "enemy_ship_small_0": {
+      "frame": {
+        "x": 145,
+        "y": 274,
+        "w": 119,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 119,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 119,
+        "h": 48
+      }
+    },
+    "monitor_3": {
+      "frame": {
+        "x": 13,
+        "y": 183,
+        "w": 112,
+        "h": 52
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 112,
+        "h": 52
+      },
+      "sourceSize": {
+        "w": 112,
+        "h": 52
+      }
+    },
+    "station_tower": {
+      "frame": {
+        "x": 312,
+        "y": 369,
+        "w": 32,
+        "h": 14
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 14
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 14
+      }
+    },
+    "monitor_4": {
+      "frame": {
+        "x": 13,
+        "y": 248,
+        "w": 112,
+        "h": 56
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 112,
+        "h": 56
+      },
+      "sourceSize": {
+        "w": 112,
+        "h": 56
+      }
+    },
+    "enemy_ship_small_1": {
+      "frame": {
+        "x": 149,
+        "y": 342,
+        "w": 148,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 148,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 148,
+        "h": 48
+      }
+    },
+    "monitor_5": {
+      "frame": {
+        "x": 13,
+        "y": 321,
+        "w": 112,
+        "h": 59
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 112,
+        "h": 59
+      },
+      "sourceSize": {
+        "w": 112,
+        "h": 59
+      }
+    },
+    "muzzle_flash_small": {
+      "frame": {
+        "x": 360,
+        "y": 204,
+        "w": 9,
+        "h": 9
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 9,
+        "h": 9
+      },
+      "sourceSize": {
+        "w": 9,
+        "h": 9
+      }
+    },
+    "muzzle_flash_big": {
+      "frame": {
+        "x": 359,
+        "y": 216,
+        "w": 12,
+        "h": 10
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 10
+      },
+      "sourceSize": {
+        "w": 12,
+        "h": 10
+      }
+    },
+    "monitor_6": {
+      "frame": {
+        "x": 13,
+        "y": 393,
+        "w": 112,
+        "h": 62
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 112,
+        "h": 62
+      },
+      "sourceSize": {
+        "w": 112,
+        "h": 62
+      }
+    },
+    "capital_ship": {
+      "frame": {
+        "x": 145,
+        "y": 402,
+        "w": 243,
+        "h": 96
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 243,
+        "h": 96
+      },
+      "sourceSize": {
+        "w": 243,
+        "h": 96
+      }
+    },
+    "monitor_7": {
+      "frame": {
+        "x": 13,
+        "y": 469,
+        "w": 112,
+        "h": 63
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 112,
+        "h": 63
+      },
+      "sourceSize": {
+        "w": 112,
+        "h": 63
+      }
+    },
+    "player_ship": {
+      "frame": {
+        "x": 141,
+        "y": 514,
+        "w": 256,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 48
+      }
+    },
+    "road_background": {
+      "frame": {
+        "x": 0,
+        "y": 581,
+        "w": 256,
+        "h": 224
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 224
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 224
+      }
+    },
+    "car_select_grid": {
+      "frame": {
+        "x": 260,
+        "y": 581,
+        "w": 256,
+        "h": 224
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 224
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 224
+      }
+    }
+  }
+}
