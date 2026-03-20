@@ -2,19 +2,16 @@ import { EventBus } from '../EventBus';
 import { Scene } from 'phaser';
 import { Starfield } from '../Starfield';
 
-export class Game extends Scene
-{
+export class Game extends Scene {
     camera: Phaser.Cameras.Scene2D.Camera;
     starfield: Starfield;
     gameText: Phaser.GameObjects.Text;
 
-    constructor ()
-    {
+    constructor() {
         super('Game');
     }
 
-    create ()
-    {
+    create() {
         this.camera = this.cameras.main;
         this.camera.setBackgroundColor(0x000000);
 
@@ -29,12 +26,10 @@ export class Game extends Scene
         EventBus.emit('current-scene-ready', this);
     }
 
-    update()
-    {
+    update() {
     }
 
-    changeScene ()
-    {
+    changeScene() {
         this.scene.start('GameOver');
     }
 }
