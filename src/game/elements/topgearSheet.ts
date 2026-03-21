@@ -1,5 +1,5 @@
 const MENU_KEY = 'menu';
-const MENU_TRANSPARENT_KEY = 'menu-transparent';
+const MENU_TRANSPARENT_KEY = 'menu';
 
 type FrameDef = {
     key: string;
@@ -52,10 +52,6 @@ const ALL_FRAMES: FrameDef[] = [
     ...HUD_FRAMES,
     ...BACKGROUND_FRAMES,
 ];
-
-export function preloadAssets(scene: Phaser.Scene): void {
-    scene.load.image(MENU_KEY, '/assets/menu.png');
-}
 
 export function createTransparentTexture(scene: Phaser.Scene): void {
     if (scene.textures.exists(MENU_TRANSPARENT_KEY)) {

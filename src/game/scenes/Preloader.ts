@@ -38,6 +38,12 @@ export class Preloader extends Scene {
         this.load.image('menu-background', 'menu-background.png');
         this.load.image('menu-player-name', 'menu-player-name.png');
 
+        //  Menu
+        this.load.atlas('menu', 'menu/full_sheet_clean.png', 'menu/atlas_curated.json');
+
+        //  Vehicles
+        this.load.atlas('vehicles', 'vehicle/full_sheet_clean.png', 'vehicle/atlas_auto.json');
+
         //  Sounds
         this.load.audio('menu-title', 'sounds/menu/01Title.mp3');
         this.load.audio('menu-highlight', 'sounds/effects/Highlight.wav');

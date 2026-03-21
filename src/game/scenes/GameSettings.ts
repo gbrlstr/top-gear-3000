@@ -5,7 +5,6 @@ import {
     createAnimations,
     createMonitor,
     createTransparentTexture,
-    preloadAssets,
 } from '../elements/topgearSheet';
 
 export class GameSettings extends Scene {
@@ -21,10 +20,6 @@ export class GameSettings extends Scene {
 
     constructor() {
         super('GameSettings');
-    }
-
-    preload() {
-        preloadAssets(this);
     }
 
     create() {
@@ -249,7 +244,7 @@ export class GameSettings extends Scene {
             if (selectedLabel === 'RACE') {
                 this.playSelectSound();
                 this.sound.stopAll();
-                this.scene.start('Game');
+                this.scene.start('RaceScene');
             } else if (selectedLabel === 'NAME') {
                 this.playSelectSound();
                 this.scene.start('PlayerNameScene');
