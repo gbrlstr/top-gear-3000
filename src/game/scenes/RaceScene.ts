@@ -15,18 +15,20 @@ export class RaceScene extends Scene {
     // Player variables
     private playerX = 0;
     private speed = 0;
-    private maxSpeed = 3000; // Much faster
-    private accel = 20;
-    private breaking = -40;
-    private decel = -10;
+
+    // Constants
+    private maxSpeed = 12000; // Aumente o valor nominal para o cálculo de física
+    private roadWidth = 2000;
+    private drawDistance = 500; // Aumente para compensar os segmentos curtos
+    private camHeight = 1000;   // Baixar a câmera aumenta a sensação de velocidade
+    private camDepth = 0.8;     // Profundidade menor achata a pista e a faz passar mais rápido
+
+    private accel = 35;       // Aceleração inicial forte
+    private breaking = -100;   // Travões potentes
+    private decel = -15;      // Atrito natural
     private offRoadDecel = -30;
     private steeringValue = 0;
 
-    // Constants
-    private camHeight = 1500; // Increased to see further, but let's try a better balance
-    private camDepth = 1.3;
-    private roadWidth = 2000;
-    private drawDistance = 300;
 
     private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
 
@@ -35,26 +37,26 @@ export class RaceScene extends Scene {
     }
 
     create() {
-        // Initialize modular road system
+        // Inicializa o gerenciador de pista
         this.trackManager = new TrackManager(track1);
 
-        // Background
+        // Fundo (Estrelas)
         this.starfield = new Starfield(this);
 
-        // Graphics for road
+        // Camada de renderização da estrada
         this.roadGraphics = this.add.graphics().setName('roadGraphics').setDepth(10);
 
-        // Player vehicle
+        // Veículo do jogador
         this.playerVehicle = this.add.sprite(this.scale.width / 2, this.scale.height - 100, 'vehicles', 'rear_r01_c00');
         this.playerVehicle.setScale(4);
         this.playerVehicle.setDepth(1000);
 
-        // Controls
+        // Controles
         if (this.input.keyboard) {
             this.cursors = this.input.keyboard.createCursorKeys();
         }
 
-        // HUD
+        // HUD de Velocidade
         this.speedText = this.add.text(this.scale.width - 200, this.scale.height - 50, '0 KPH', {
             fontFamily: '"Press Start 2P"',
             fontSize: '24px',
@@ -69,12 +71,16 @@ export class RaceScene extends Scene {
 
         this.handleInput(dt);
 
+        // Atualiza a posição na pista
         this.trackManager.update(this.speed * dt);
 
         this.renderRoad();
-        this.updatePlayerVisuals();
+        this.updatePlayerVisuals(_time);
 
-        this.speedText.setText(`${Math.floor(this.speed / 5)} KPH`);
+        // EXIBIÇÃO EM KM/H (Realista)
+        // Dividimos por 40 para que 12000 no código = 300 KM/H no ecrã
+        const kmh = Math.floor(this.speed / 40);
+        this.speedText.setText(`${kmh} KM/H`);
 
         if (this.starfield) {
             this.starfield.update();
@@ -84,96 +90,123 @@ export class RaceScene extends Scene {
     private handleInput(dt: number) {
         if (!this.cursors) return;
 
-        const accel = this.accel * 60 * dt;
+        const speedPercent = this.speed / this.maxSpeed;
+
+        // ACELERAÇÃO PROGRESSIVA: 
+        // O carro acelera rápido até aos 150 KM/H e depois demora mais a subir
+        const powerMult = speedPercent < 0.5 ? 1.0 : 1.0 - (speedPercent - 0.5);
+        const currentAccel = this.accel * powerMult * 60 * dt;
+
         const braking = this.breaking * 60 * dt;
         const decel = this.decel * 60 * dt;
-        const offRoadDecel = this.offRoadDecel * 60 * dt;
 
+        // 1. Controlos de Velocidade
         if (this.cursors.up.isDown) {
-            this.speed += accel;
+            this.speed += currentAccel;
         } else if (this.cursors.down.isDown) {
             this.speed += braking;
         } else {
-            this.speed += decel;
+            this.speed += decel; // Desaceleração por inércia
         }
 
-        const steerAmount = 1.8 * dt;
-        const steerVisualStep = 3 * dt;
-
-        if (this.cursors.left.isDown && this.speed > 0) {
-            this.playerX -= steerAmount * (this.speed / this.maxSpeed);
-            this.steeringValue = Phaser.Math.Clamp(this.steeringValue - steerVisualStep, -1, 1);
-        } else if (this.cursors.right.isDown && this.speed > 0) {
-            this.playerX += steerAmount * (this.speed / this.maxSpeed);
-            this.steeringValue = Phaser.Math.Clamp(this.steeringValue + steerVisualStep, -1, 1);
-        } else {
-            if (this.steeringValue > 0) this.steeringValue = Math.max(0, this.steeringValue - steerVisualStep);
-            if (this.steeringValue < 0) this.steeringValue = Math.min(0, this.steeringValue + steerVisualStep);
-        }
-
+        // Trava a velocidade entre 0 e o Máximo lógico
         this.speed = Phaser.Math.Clamp(this.speed, 0, this.maxSpeed);
 
-        const currentSegment =
-            this.trackManager.segments[
-            Math.floor(this.trackManager.position / this.trackManager.segmentLength) %
-            this.trackManager.segments.length
-            ];
+        // 2. Direção Dinâmica
+        if (this.speed > 0) {
+            // O carro é mais sensível a baixa velocidade e "pesado" a alta velocidade
+            const steerPower = (2.5 - (speedPercent * 1.5)) * dt;
+            const steerVisualStep = 4 * dt;
 
-        const centrifugal = currentSegment.curve * (this.speed / this.maxSpeed) * 0.9 * dt;
-        this.playerX -= centrifugal;
+            if (this.cursors.left.isDown) {
+                this.playerX -= steerPower;
+                this.steeringValue = Phaser.Math.Clamp(this.steeringValue - steerVisualStep, -1, 1);
+            } else if (this.cursors.right.isDown) {
+                this.playerX += steerPower;
+                this.steeringValue = Phaser.Math.Clamp(this.steeringValue + steerVisualStep, -1, 1);
+            } else {
+                // Centralização automática do volante
+                if (this.steeringValue > 0) this.steeringValue = Math.max(0, this.steeringValue - steerVisualStep);
+                if (this.steeringValue < 0) this.steeringValue = Math.min(0, this.steeringValue + steerVisualStep);
+            }
+        }
 
+        // 3. Força Centrífuga (Curvas)
+        const currentSegment = this.trackManager.segments[
+            Math.floor(this.trackManager.position / this.trackManager.segmentLength) % this.trackManager.segments.length
+        ];
+
+        if (currentSegment && this.speed > 500) {
+            // A força aumenta com o quadrado da velocidade
+            const centrifugal = currentSegment.curve * (speedPercent * speedPercent) * 0.6 * dt;
+            this.playerX -= centrifugal;
+        }
+
+        // 4. Limites e Penalidade de Grama
         this.playerX = Phaser.Math.Clamp(this.playerX, -2, 2);
 
-        if (Math.abs(this.playerX) > 1.05 && this.speed > 100) {
-            this.speed += offRoadDecel;
+        if (Math.abs(this.playerX) > 1.0) { // Fora da estrada
+            const offRoadLimit = this.maxSpeed * 0.3; // Velocidade máxima na grama é 90 KM/H
+            if (this.speed > offRoadLimit) {
+                this.speed += (this.breaking * 0.5) * 60 * dt; // Abranda rápido na grama
+            }
         }
     }
 
-    private updatePlayerVisuals() {
+    private updatePlayerVisuals(time: number) {
         const carColor = 'r01';
         let frameIdx = '00';
 
         const steer = this.steeringValue;
         const absSteering = Math.abs(steer);
 
-        if (absSteering > 0.66) {
-            frameIdx = '03';
-        } else if (absSteering > 0.33) {
-            frameIdx = '02';
-        } else if (absSteering > 0.08) {
-            frameIdx = '01';
+        // Troca de frames conforme intensidade da curva do jogador
+        if (absSteering > 0.66) frameIdx = '03';
+        else if (absSteering > 0.33) frameIdx = '02';
+        else if (absSteering > 0.08) frameIdx = '01';
+        else if (this.speed > 0) {
+            // Efeito de vibração em velocidade (alterna frames 00 e 01)
+            frameIdx = (Math.floor(time / 100) % 2 === 0) ? '00' : '01';
         }
 
-        const frameName = `rear_${carColor}_c${frameIdx}`;
-        this.playerVehicle.setFrame(frameName);
-
-        const laneOffsetPixels = this.playerX * 180;
-        this.playerVehicle.x = this.scale.width / 2 + laneOffsetPixels;
-        this.playerVehicle.y = this.scale.height - 110;
-
+        this.playerVehicle.setFrame(`rear_${carColor}_c${frameIdx}`);
         this.playerVehicle.setFlipX(steer < 0);
+
+        // Posiciona o carro em relação à projeção 2D da estrada
+        const currentSegment = this.trackManager.segments[
+            Math.floor(this.trackManager.position / this.trackManager.segmentLength) % this.trackManager.segments.length
+        ];
+
+        const roadCenterX = currentSegment?.p1.screen.x || this.scale.width / 2;
+        const laneOffsetPixels = this.playerX * (currentSegment?.p1.screen.w || 200) * 0.9;
+
+        this.playerVehicle.x = roadCenterX + laneOffsetPixels;
+        this.playerVehicle.y = this.scale.height - 110;
     }
 
     private renderRoad() {
-        const baseSegmentIndex = Math.floor(this.trackManager.position / this.trackManager.segmentLength);
-        const basePercent = (this.trackManager.position % this.trackManager.segmentLength) / this.trackManager.segmentLength;
+        const baseSegmentIndex = Math.floor(this.trackManager.position / this.trackManager.segmentLength) % this.trackManager.segments.length;
+        const currentSegment = this.trackManager.segments[baseSegmentIndex];
 
-        const segmentsToRender = this.trackManager.getSegmentsToRender(
-            baseSegmentIndex,
-            this.drawDistance
-        );
+        // Interpolação da altura para evitar "trancos" em subidas
+        const percent = (this.trackManager.position % this.trackManager.segmentLength) / this.trackManager.segmentLength;
+        const playerYWorld = Phaser.Math.Linear(currentSegment.p1.world.y, currentSegment.p2.world.y, percent);
+
+        const segmentsToRender = this.trackManager.getSegmentsToRender(this.drawDistance);
 
         this.trackManager.projectSegments(
             segmentsToRender,
-            this.playerX * (this.roadWidth * 0.5),
-            this.camHeight,
-            this.trackManager.position,
+            this.playerX * this.roadWidth,
+            this.camHeight + playerYWorld, // Soma a altura do mundo à altura da câmera
             this.camDepth,
             this.scale.width,
             this.scale.height,
-            this.roadWidth,
-            basePercent
+            this.roadWidth
         );
+
+        // Ajusta a posição Y visual do carro para que ele não fique "flutuando" ou "entrando" na pista
+        // Em subidas, o carro deve subir levemente na tela
+        this.playerVehicle.y = (this.scale.height - 110) - (this.speed / this.maxSpeed) * 10;
 
         RoadRenderer.render(
             this.roadGraphics,

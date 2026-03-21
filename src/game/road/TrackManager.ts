@@ -6,7 +6,7 @@ export class TrackManager {
     segments: RoadSegment[] = [];
     trackLength = 0;
     position = 0;
-    segmentLength = 300; // Increased for better high-speed feel
+    segmentLength = 150; // Padrão clássico do OutRun
 
     constructor(trackData: TrackData) {
         this.buildTrack(trackData);
@@ -15,40 +15,22 @@ export class TrackManager {
     private buildTrack(data: TrackData) {
         let z = 0;
         let y = 0;
-        let dy = 0;
-
         for (let s = 0; s < data.segments.length; s++) {
             const segData = data.segments[s];
-            const nextCurve = data.segments[(s + 1) % data.segments.length].curve;
-            const prevCurve = data.segments[s > 0 ? s - 1 : data.segments.length - 1].curve;
-
             for (let i = 0; i < segData.length; i++) {
                 const isEven = Math.floor(this.segments.length / 3) % 2 === 0;
                 const colors = isEven ? data.palette.light : data.palette.dark;
-
-                // Interpolate curve for ultra-smooth transitions
-                const percent = i / segData.length;
-                let curve = segData.curve;
-
-                if (percent < 0.2) {
-                    // Ease in from previous segment
-                    curve = Phaser.Math.Linear(prevCurve, segData.curve, percent / 0.2);
-                } else if (percent > 0.8) {
-                    // Ease out to next segment
-                    curve = Phaser.Math.Linear(segData.curve, nextCurve, (percent - 0.8) / 0.2);
-                }
 
                 const segment = new RoadSegment(
                     this.segments.length,
                     z,
                     z + this.segmentLength,
-                    curve,
+                    segData.curve,
                     colors
                 );
 
                 segment.p1.world.y = y;
-                dy += segData.hill;
-                y += dy;
+                y += segData.hill;
                 segment.p2.world.y = y;
 
                 this.segments.push(segment);
@@ -60,14 +42,17 @@ export class TrackManager {
 
     update(speed: number) {
         this.position += speed;
+        // Lógica de loop infinito (Wrap around)
         while (this.position >= this.trackLength) this.position -= this.trackLength;
         while (this.position < 0) this.position += this.trackLength;
     }
 
-    getSegmentsToRender(startPos: number, drawDistance: number): RoadSegment[] {
+    getSegmentsToRender(drawDistance: number): RoadSegment[] {
+        const startLine = Math.floor(this.position / this.segmentLength);
         const result: RoadSegment[] = [];
+
         for (let n = 0; n < drawDistance; n++) {
-            const segment = this.segments[(startPos + n) % this.segments.length];
+            const segment = this.segments[(startLine + n) % this.segments.length];
             result.push(segment);
         }
         return result;
@@ -77,38 +62,27 @@ export class TrackManager {
         segments: RoadSegment[],
         cameraX: number,
         cameraY: number,
-        cameraZ: number,
         cameraDepth: number,
         width: number,
         height: number,
-        roadWidth: number,
-        basePercent = 0
+        roadWidth: number
     ) {
         let x = 0;
         let dx = 0;
+        const startLine = Math.floor(this.position / this.segmentLength);
 
-        const cameraSegmentIndex = Math.floor(cameraZ / this.segmentLength);
+        for (let n = 0; n < segments.length; n++) {
+            const segment = segments[n];
+            const loopOffset = (startLine + n) >= this.segments.length ? this.trackLength : 0;
 
-        for (let i = 0; i < segments.length; i++) {
-            const segment = segments[i];
-
-            const segmentIndex = (cameraSegmentIndex + i) % this.segments.length;
-
-            const worldZ1 = i * this.segmentLength - (basePercent * this.segmentLength);
-            const worldZ2 = worldZ1 + this.segmentLength;
-
-            segment.p1.world.x = x;
-            segment.p2.world.x = x + dx;
-
-            dx += segment.curve * 0.01;
-            x += dx;
-
+            // O segredo para subidas: cameraY deve subtrair a altura do segmento base
+            // para que o carro suba junto com a pista
             RoadProjector.project(
                 segment.p1,
-                worldZ1 + cameraZ,
-                cameraX,
-                cameraY,
-                cameraZ,
+                segment.p1.world.z - loopOffset,
+                cameraX - x,
+                cameraY, // Aqui será ajustado na RaceScene
+                this.position,
                 cameraDepth,
                 width,
                 height,
@@ -117,15 +91,18 @@ export class TrackManager {
 
             RoadProjector.project(
                 segment.p2,
-                worldZ2 + cameraZ,
-                cameraX,
+                segment.p2.world.z - loopOffset,
+                cameraX - (x + dx),
                 cameraY,
-                cameraZ,
+                this.position,
                 cameraDepth,
                 width,
                 height,
                 roadWidth
             );
+
+            x += dx;
+            dx += segment.curve;
         }
     }
 }

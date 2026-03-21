@@ -4,38 +4,30 @@ export class RoadRenderer {
     static render(graphics: Phaser.GameObjects.Graphics, width: number, horizon: number, segments: RoadSegment[]) {
         graphics.clear();
 
-        // Draw Sky if needed, but we use Starfield
+        let maxy = horizon; // Linha de clipping para evitar que a pista "suba" demais
 
-        for (let i = 0; i < segments.length; i++) {
+        // Desenha do segmento mais distante para o mais próximo
+        for (let i = segments.length - 1; i >= 0; i--) {
             const segment = segments[i];
             const p1 = segment.p1.screen;
             const p2 = segment.p2.screen;
 
+            // Se o ponto mais distante está abaixo do mais próximo, ou sumiu no horizonte, pula
             if (p1.y <= p2.y || p2.y < horizon) continue;
 
-            // Grass
+            // Grama
             graphics.fillStyle(segment.colors.grass);
             graphics.fillRect(0, p2.y, width, p1.y - p2.y);
 
-            // Rumble strips (wider for better speed sense)
-            const rumbleW1 = p1.w * 1.15;
-            const rumbleW2 = p2.w * 1.15;
-            this.drawPolygon(graphics, segment.colors.rumble,
-                p1.x, p1.y, rumbleW1,
-                p2.x, p2.y, rumbleW2);
+            // Rumble (zebras)
+            this.drawPolygon(graphics, segment.colors.rumble, p1.x, p1.y, p1.w * 1.2, p2.x, p2.y, p2.w * 1.2);
 
-            // Road
-            this.drawPolygon(graphics, segment.colors.road,
-                p1.x, p1.y, p1.w,
-                p2.x, p2.y, p2.w);
+            // Estrada
+            this.drawPolygon(graphics, segment.colors.road, p1.x, p1.y, p1.w, p2.x, p2.y, p2.w);
 
-            // Lane markers
+            // Linha central
             if (segment.colors.lane) {
-                const laneW1 = p1.w * 0.02;
-                const laneW2 = p2.w * 0.02;
-                this.drawPolygon(graphics, segment.colors.lane,
-                    p1.x, p1.y, laneW1,
-                    p2.x, p2.y, laneW2);
+                this.drawPolygon(graphics, segment.colors.lane, p1.x, p1.y, p1.w * 0.02, p2.x, p2.y, p2.w * 0.02);
             }
         }
     }
