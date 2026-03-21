@@ -38,6 +38,15 @@ export class PlayerNameScene extends Phaser.Scene {
         this.shutter = new ShutterTransition(this);
         this.shutter.enter();
 
+        const bg = this.add.image(this.scale.width / 2, this.scale.height / 2, 'menu-player-name')
+            .setOrigin(0.5)
+            .setDepth(0);
+
+        // Scale to cover the screen
+        const scaleX = this.scale.width / bg.width;
+        const scaleY = this.scale.height / bg.height;
+        bg.setScale(Math.max(scaleX, scaleY));
+
         this.cameras.main.setBackgroundColor('#000000');
 
         // Load name from localStorage
@@ -63,45 +72,9 @@ export class PlayerNameScene extends Phaser.Scene {
 
     private drawBackground() {
         const graphics = this.add.graphics();
-        const width = 1024;
-        const height = 768;
-
-        const mainBlue = 0x0a16d8;
-        const lightBlue = 0x00b8ff;
-        const bandHeight = 72;
-        const gap = 4;
-
-        for (let y = 0; y < height; y += bandHeight + gap) {
-            graphics.fillStyle(mainBlue, 1);
-            graphics.fillRect(0, y, width, bandHeight);
-
-            graphics.fillStyle(lightBlue, 1);
-            graphics.fillRect(0, y, width, 3);
-
-            graphics.lineStyle(2, 0x000000, 1);
-            graphics.lineBetween(0, y + bandHeight, width, y + bandHeight);
-        }
-
-        const yellow = 0xffff00;
-        const stripeWidth = 10;
-        const xPositions = [16, 46, width - 34, width - 64];
-
-        xPositions.forEach((x) => {
-            graphics.fillStyle(0x000000, 1);
-            graphics.fillRect(x - 2, 0, stripeWidth + 4, height);
-            graphics.fillStyle(yellow, 1);
-            graphics.fillRect(x, 0, stripeWidth, height);
-        });
-
-        // Monitor area black box - Expanded down
+        const width = 905;
         graphics.fillStyle(0x000000, 1);
-        graphics.fillRect(0, 70, width, 250);
-
-        graphics.fillStyle(0x0a16d8, 1);
-        graphics.fillRect(0, 320, width, 65);
-
-        graphics.fillStyle(0x000000, 1);
-        graphics.fillRect(0, 385, width, 10);
+        graphics.fillRect(60, 80, width, 224)
     }
 
     private drawGrid() {
@@ -167,7 +140,7 @@ export class PlayerNameScene extends Phaser.Scene {
         this.typedSprites = [];
 
         let cursorX = 380;
-        const baseY = 335;
+        const baseY = 318;
         const scale = 4.2;
         const extraSpacing = 2;
 
@@ -209,7 +182,7 @@ export class PlayerNameScene extends Phaser.Scene {
 
     private updateNameCursorPosition() {
         let cursorX = 380;
-        const y = 325;
+        const y = 308;
         const scale = 4.2;
         const extraSpacing = 2;
 
@@ -264,15 +237,21 @@ export class PlayerNameScene extends Phaser.Scene {
         }
     }
 
+    private playSelectSound() {
+        if (this.cache.audio.exists('menu-select')) {
+            this.sound.play('menu-select', { volume: 0.8 });
+        }
+    }
+
     private handleAction() {
         const item = this.gridItems[this.gridY][this.gridX];
         if (!item) return;
 
-        this.playHighlightSound();
         const char = item.char;
 
         if (char === 'del') {
             this.typedName = this.typedName.slice(0, -1);
+            this.playSelectSound();
         } else if (char === 'end') {
             const finalName = this.typedName || 'PLAYER';
             this.registry.set('playerName', finalName);
@@ -280,10 +259,12 @@ export class PlayerNameScene extends Phaser.Scene {
             this.shutter.exit().then(() => {
                 this.scene.start('GameSettings');
             });
+            this.playSelectSound();
             return;
         } else {
             if (this.typedName.length < this.maxNameLength) {
                 this.typedName += char;
+                this.playHighlightSound();
             }
         }
 

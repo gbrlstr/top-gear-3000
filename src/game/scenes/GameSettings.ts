@@ -31,6 +31,15 @@ export class GameSettings extends Scene {
         this.shutter = new ShutterTransition(this);
         this.shutter.enter();
 
+        const bg = this.add.image(this.scale.width / 2, this.scale.height / 2, 'menu-background')
+            .setOrigin(0.5)
+            .setDepth(0);
+
+        // Scale to cover the screen
+        const scaleX = this.scale.width / bg.width;
+        const scaleY = this.scale.height / bg.height;
+        bg.setScale(Math.max(scaleX, scaleY));
+
         // Reset scene state for fresh entry
         this.menuOptions = [];
         this.selectedOption = 0;
@@ -83,45 +92,9 @@ export class GameSettings extends Scene {
 
     private drawBackground() {
         const graphics = this.add.graphics();
-        const width = 1024;
-        const height = 768;
-
-        const mainBlue = 0x0000cc;
-        const lightBlue = 0x0066ff;
-        const bandHeight = 75;
-        const gap = 5;
-
-        for (let y = 0; y < height; y += bandHeight + gap) {
-            graphics.fillStyle(mainBlue, 1);
-            graphics.fillRect(0, y, width, bandHeight);
-
-            graphics.fillStyle(lightBlue, 1);
-            graphics.fillRect(0, y, width, 4);
-
-            graphics.lineStyle(2, 0x000000, 1);
-            graphics.lineBetween(0, y + bandHeight, width, y + bandHeight);
-        }
-
-        const yellow = 0xffff00;
-        const stripeWidth = 10;
-        const xPositions = [20, 50, width - 30, width - 60];
-
-        xPositions.forEach((x) => {
-            graphics.fillStyle(0x000000, 1);
-            graphics.fillRect(x - 2, 0, stripeWidth + 4, height);
-
-            graphics.fillStyle(yellow, 1);
-            graphics.fillRect(x, 0, stripeWidth, height);
-
-            graphics.lineStyle(1, 0x000000, 0.4);
-            graphics.lineBetween(x + stripeWidth / 2, 0, x + stripeWidth / 2, height);
-        });
-
+        const width = 905;
         graphics.fillStyle(0x000000, 1);
-        graphics.fillRect(0, 160, width, 300);
-
-        graphics.fillStyle(0x000000, 1);
-        graphics.fillRect(0, 460, width, 12);
+        graphics.fillRect(60, 80, width, 224)
     }
 
     private createFieryBackground() {
@@ -163,7 +136,7 @@ export class GameSettings extends Scene {
     }
 
     private drawMonitor() {
-        this.monitor = createMonitor(this, 512, 270);
+        this.monitor = createMonitor(this, 512, 190);
         this.monitor.setScale(3.5);
         this.monitor.setDepth(20);
 
@@ -181,7 +154,7 @@ export class GameSettings extends Scene {
         };
 
         labels.forEach((label, index) => {
-            const text = this.add.text(512, 200 + index * 45, label, fontConfig)
+            const text = this.add.text(512, 120 + index * 45, label, fontConfig)
                 .setOrigin(0.5)
                 .setDepth(100)
                 .setInteractive({ useHandCursor: true });
@@ -274,9 +247,11 @@ export class GameSettings extends Scene {
 
         this.shutter.exit().then(() => {
             if (selectedLabel === 'RACE') {
+                this.playSelectSound();
                 this.sound.stopAll();
                 this.scene.start('Game');
             } else if (selectedLabel === 'NAME') {
+                this.playSelectSound();
                 this.scene.start('PlayerNameScene');
             } else {
                 this.playHighlightSound();
@@ -287,6 +262,12 @@ export class GameSettings extends Scene {
     private playHighlightSound() {
         if (this.cache.audio.exists('menu-highlight')) {
             this.sound.play('menu-highlight', { volume: 0.8 });
+        }
+    }
+
+    private playSelectSound() {
+        if (this.cache.audio.exists('menu-select')) {
+            this.sound.play('menu-select', { volume: 0.8 });
         }
     }
 }

@@ -32,10 +32,16 @@ export class Preloader extends Scene {
         //  Load the assets for the game - Replace with your own assets
         this.load.setPath('assets');
 
+        //  Images
         this.load.image('logo', 'logo.png');
         this.load.image('star', 'star.png');
+        this.load.image('menu-background', 'menu-background.png');
+        this.load.image('menu-player-name', 'menu-player-name.png');
+
+        //  Sounds
         this.load.audio('menu-title', 'sounds/menu/01Title.mp3');
         this.load.audio('menu-highlight', 'sounds/effects/Highlight.wav');
+        this.load.audio('menu-select', 'sounds/effects/Select.wav');
     }
 
     create() {
