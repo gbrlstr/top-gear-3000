@@ -2,6 +2,7 @@ export interface RoadColors {
     road: number;
     grass: number;
     rumble: number;
+    startLine: number;
     lane?: number;
 }
 
@@ -11,6 +12,7 @@ export class RoadSegment {
     p2: { world: { x: number, y: number, z: number }, screen: { x: number, y: number, w: number } };
     curve: number;
     colors: RoadColors;
+    public isStartLine: boolean = false;
 
     constructor(index: number, z1: number, z2: number, curve: number, colors: RoadColors) {
         this.index = index;

@@ -1,13 +1,24 @@
 import { RoadColors } from "../road/RoadSegment";
 
+export interface TrackPalette {
+    road: number;
+    grass: number;
+    rumble: number;
+    startLine: number; // Cor específica para a linha de chegada
+    lane?: number;
+}
 export interface TrackData {
-    id: string;
+    id: number;
     name: string;
     palette: {
-        light: RoadColors;
-        dark: RoadColors;
+        light: TrackPalette;
+        dark: TrackPalette;
     };
-    segments: TrackSegmentData[];
+    segments: Array<{
+        length: number;
+        curve: number;
+        hill: number;
+    }>;
 }
 
 export interface TrackSegmentData {

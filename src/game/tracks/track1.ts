@@ -1,11 +1,11 @@
 import { TrackData } from "./trackTypes";
 
 export const track1: TrackData = {
-    id: 'track1',
+    id: 1,
     name: 'Nebula Road',
     palette: {
-        light: { road: 0x444444, grass: 0x101010, rumble: 0x555555, lane: 0xcccccc },
-        dark:  { road: 0x404040, grass: 0x000000, rumble: 0xbb0000 }
+        light: { road: 0x444444, grass: 0x101010, rumble: 0x555555, lane: 0xcccccc, startLine: 0xffffff },
+        dark: { road: 0x404040, grass: 0x000000, rumble: 0xbb0000, startLine: 0xffffff }
     },
     segments: [
         { length: 50, curve: 0, hill: 0 },

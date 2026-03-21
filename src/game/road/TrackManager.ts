@@ -18,6 +18,7 @@ export class TrackManager {
         for (let s = 0; s < data.segments.length; s++) {
             const segData = data.segments[s];
             for (let i = 0; i < segData.length; i++) {
+                const segmentIndex = this.segments.length; // Pega o índice atual
                 const isEven = Math.floor(this.segments.length / 3) % 2 === 0;
                 const colors = isEven ? data.palette.light : data.palette.dark;
 
@@ -28,6 +29,12 @@ export class TrackManager {
                     segData.curve,
                     colors
                 );
+
+                // MARCAÇÃO DA LINHA DE CHEGADA:
+                // Vamos marcar os primeiros 15 segmentos (1500 unidades de Z se o length for 100)
+                if (segmentIndex >= 0 && segmentIndex < 8) {
+                    segment.isStartLine = true;
+                }
 
                 segment.p1.world.y = y;
                 y += segData.hill;
@@ -69,19 +76,23 @@ export class TrackManager {
     ) {
         let x = 0;
         let dx = 0;
+
+        // Descobrimos em qual segmento a câmera está
         const startLine = Math.floor(this.position / this.segmentLength);
 
         for (let n = 0; n < segments.length; n++) {
             const segment = segments[n];
+
+            // Se o índice visual (n) somado ao início ultrapassa o total de segmentos,
+            // significa que esse segmento faz parte da 'próxima volta'.
+            // Somamos trackLength para que o RoadProjector coloque ele lá na frente.
             const loopOffset = (startLine + n) >= this.segments.length ? this.trackLength : 0;
 
-            // O segredo para subidas: cameraY deve subtrair a altura do segmento base
-            // para que o carro suba junto com a pista
             RoadProjector.project(
                 segment.p1,
-                segment.p1.world.z - loopOffset,
+                segment.p1.world.z + loopOffset, // Adicionamos o offset aqui
                 cameraX - x,
-                cameraY, // Aqui será ajustado na RaceScene
+                cameraY,
                 this.position,
                 cameraDepth,
                 width,
@@ -91,7 +102,7 @@ export class TrackManager {
 
             RoadProjector.project(
                 segment.p2,
-                segment.p2.world.z - loopOffset,
+                segment.p2.world.z + loopOffset, // E aqui também
                 cameraX - (x + dx),
                 cameraY,
                 this.position,

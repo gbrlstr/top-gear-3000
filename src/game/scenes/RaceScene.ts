@@ -38,7 +38,8 @@ export class RaceScene extends Scene {
 
     create() {
         // Inicializa o gerenciador de pista
-        this.trackManager = new TrackManager(track1);
+        const selectedTrack = track1;
+        this.trackManager = new TrackManager(selectedTrack);
 
         // Fundo (Estrelas)
         this.starfield = new Starfield(this);
