@@ -37,6 +37,8 @@ export class Preloader extends Scene {
         this.load.image('star', 'star.png');
         this.load.image('menu-background', 'menu-background.png');
         this.load.image('menu-player-name', 'menu-player-name.png');
+        this.load.spritesheet('tree', 'trees.png', { frameWidth: 741, frameHeight: 900 });
+        this.load.spritesheet('sign_curve', 'sign_curve.png', { frameWidth: 201, frameHeight: 390 });
 
         //  Menu
         this.load.atlas('menu', 'menu/full_sheet_clean.png', 'menu/atlas_curated.json');

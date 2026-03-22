@@ -22,11 +22,11 @@ export class RaceScene extends Scene {
     private drawDistance = 500; // Aumente para compensar os segmentos curtos
     private camHeight = 1000;   // Baixar a câmera aumenta a sensação de velocidade
     private camDepth = 0.8;     // Profundidade menor achata a pista e a faz passar mais rápido
-
+    private spriteGroup!: Phaser.GameObjects.Group;
     private accel = 35;       // Aceleração inicial forte
     private breaking = -100;   // Travões potentes
     private decel = -15;      // Atrito natural
-    private offRoadDecel = -30;
+
     private steeringValue = 0;
 
 
@@ -47,6 +47,10 @@ export class RaceScene extends Scene {
         // Camada de renderização da estrada
         this.roadGraphics = this.add.graphics().setName('roadGraphics').setDepth(10);
 
+        // GRUPO PARA SPRITES LATERAIS (Árvores/Placas)
+        // Usamos um grupo para gerenciar imagens individuais, permitindo escalas diferentes.
+        this.spriteGroup = this.add.group().setDepth(20);
+
         // Veículo do jogador
         this.playerVehicle = this.add.sprite(this.scale.width / 2, this.scale.height - 100, 'vehicles', 'rear_r01_c00');
         this.playerVehicle.setScale(4);
@@ -60,7 +64,7 @@ export class RaceScene extends Scene {
         // HUD de Velocidade
         this.speedText = this.add.text(this.scale.width - 200, this.scale.height - 50, '0 KPH', {
             fontFamily: '"Press Start 2P"',
-            fontSize: '24px',
+            fontSize: '23px',
             color: '#ffff00'
         }).setDepth(2000);
 
@@ -211,6 +215,7 @@ export class RaceScene extends Scene {
 
         RoadRenderer.render(
             this.roadGraphics,
+            this.spriteGroup, // ADICIONE ESTE PARÂMETRO
             this.scale.width,
             this.scale.height * 0.35,
             segmentsToRender

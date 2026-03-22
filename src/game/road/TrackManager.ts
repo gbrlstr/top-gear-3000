@@ -30,6 +30,30 @@ export class TrackManager {
                     colors
                 );
 
+                // Exemplo: Adiciona uma árvore a cada 15 segmentos alternando os lados
+                if (this.segments.length % 15 === 0) {
+                    const isLeft = (this.segments.length / 15) % 2 === 0;
+                    segment.sprites.push({
+                        source: 'tree',
+                        offset: isLeft ? -1.8 : 1.8,
+                        scale: 2.0,
+                        frame: isLeft ? 0 : 1 // Altera a cor conforme o lado ou posição
+                    });
+                }
+
+                // Exemplo: Adiciona uma placa de sinalização em curvas fechadas
+                if (Math.abs(segData.curve) > 2) {
+                    if (this.segments.length % 10 === 0) {
+                        const isLeftTurn = segData.curve < 0;
+                        segment.sprites.push({
+                            source: 'sign_curve',
+                            offset: isLeftTurn ? 1.5 : -1.5,
+                            frame: isLeftTurn ? 1 : 0, 
+                            scale: 2.0
+                        });
+                    }
+                }
+
                 // MARCAÇÃO DA LINHA DE CHEGADA:
                 // Vamos marcar os primeiros 15 segmentos (1500 unidades de Z se o length for 100)
                 if (segmentIndex >= 0 && segmentIndex < 8) {

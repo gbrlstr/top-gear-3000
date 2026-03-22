@@ -2,8 +2,17 @@ import { RoadSegment } from './RoadSegment';
 
 export class RoadRenderer {
     // No seu RoadRenderer.ts
-    static render(graphics: Phaser.GameObjects.Graphics, width: number, horizon: number, segments: RoadSegment[]) {
+    static render(graphics: Phaser.GameObjects.Graphics, spriteGroup: Phaser.GameObjects.Group, width: number, horizon: number, segments: RoadSegment[]) {
         graphics.clear();
+
+        // Esconde todos os sprites do grupo para reutilização (pooling)
+        spriteGroup.children.iterate((child: any) => {
+            child.setVisible(false);
+            return true;
+        });
+
+        let spriteCount = 0;
+        const allChildren = spriteGroup.getChildren();
 
         for (let i = segments.length - 1; i >= 0; i--) {
             const segment = segments[i];
@@ -18,38 +27,62 @@ export class RoadRenderer {
             graphics.fillStyle(segment.colors.grass);
             graphics.fillRect(0, p2.y, width, p1.y - p2.y);
 
+            // DESENHO DOS SPRITES LATERAIS
+            for (const obj of segment.sprites) {
+                const spriteX = p1.x + (p1.w * obj.offset);
+                const spriteY = p1.y;
+                const spriteScale = p1.scale! * (obj.scale || 1) * 400;
+
+                // Lógica de pooling: reutiliza um sprite existente ou cria um novo
+                let sprite: Phaser.GameObjects.Image;
+
+                if (spriteCount < allChildren.length) {
+                    sprite = allChildren[spriteCount] as Phaser.GameObjects.Image;
+                    sprite.setTexture(obj.source, obj.frame);
+                    sprite.setPosition(spriteX, spriteY);
+                } else {
+                    sprite = spriteGroup.scene.add.image(spriteX, spriteY, obj.source, obj.frame);
+                    spriteGroup.add(sprite);
+                }
+
+                sprite.setVisible(true);
+                sprite.setScale(spriteScale);
+                sprite.setOrigin(0.5, 1);
+                sprite.setDepth(20 + (p1.y / 1000)); // Pequeno ajuste de profundidade baseado no Y
+
+                spriteCount++;
+            }
+
             // 2. Desenha o Rumble (Zebra)
-            this.drawPolygon(graphics, segment.colors.rumble, p1.x, p1.y, p1.w * 1.15, p2.x, p2.y, p2.w * 1.15);
+            RoadRenderer.drawPolygon(graphics, segment.colors.rumble, p1.x, p1.y, p1.w * 1.15, p2.x, p2.y, p2.w * 1.15);
 
             // 3. Desenha a Estrada ou Linha de Chegada
             if (segment.isStartLine) {
                 // 1. Fundo Branco
-                this.drawPolygon(graphics, segment.colors.lane!, p1.x, p1.y, p1.w, p2.x, p2.y, p2.w);
+                RoadRenderer.drawPolygon(graphics, segment.colors.lane!, p1.x, p1.y, p1.w, p2.x, p2.y, p2.w);
 
                 // 2. Quadrados Pretos (Xadrez)
-                // Usamos 10 divisões para um visual mais detalhado
                 const columns = 15;
                 const checkW1 = (p1.w * 2) / columns;
                 const checkW2 = (p2.w * 2) / columns;
 
                 for (let c = 0; c < columns; c++) {
-                    // Alterna entre desenhar ou não baseado na coluna
                     if (c % 2 === 0) {
                         const x1 = p1.x - p1.w + (c * checkW1);
                         const x2 = p2.x - p2.w + (c * checkW2);
 
-                        this.drawPolygon(graphics, segment.colors.grass,
+                        RoadRenderer.drawPolygon(graphics, segment.colors.grass,
                             x1 + checkW1 / 2, p1.y, checkW1 / 2,
                             x2 + checkW2 / 2, p2.y, checkW2 / 2);
                     }
                 }
             } else {
                 // Estrada normal
-                this.drawPolygon(graphics, segment.colors.road, p1.x, p1.y, p1.w, p2.x, p2.y, p2.w);
+                RoadRenderer.drawPolygon(graphics, segment.colors.road, p1.x, p1.y, p1.w, p2.x, p2.y, p2.w);
 
                 // Faixas brancas centrais
                 if (segment.colors.lane) {
-                    this.drawPolygon(graphics, segment.colors.lane, p1.x, p1.y, p1.w * 0.02, p2.x, p2.y, p2.w * 0.02);
+                    RoadRenderer.drawPolygon(graphics, segment.colors.lane, p1.x, p1.y, p1.w * 0.02, p2.x, p2.y, p2.w * 0.02);
                 }
             }
         }
@@ -65,4 +98,6 @@ export class RoadRenderer {
         g.closePath();
         g.fillPath();
     }
+
+
 }

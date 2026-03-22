@@ -6,13 +6,21 @@ export interface RoadColors {
     lane?: number;
 }
 
+export interface SpriteObject {
+    source: string;     // Nome da imagem/frame no Phaser
+    offset: number;     // -1 (esquerda), 1 (direita), 0 (centro)
+    scale?: number;     // Escala personalizada
+    frame?: number;     // Índice do frame (para spritesheets)
+}
+
 export class RoadSegment {
     index: number;
-    p1: { world: { x: number, y: number, z: number }, screen: { x: number, y: number, w: number } };
-    p2: { world: { x: number, y: number, z: number }, screen: { x: number, y: number, w: number } };
+    p1: { world: { x: number, y: number, z: number }, screen: { x: number, y: number, w: number, scale?: number } };
+    p2: { world: { x: number, y: number, z: number }, screen: { x: number, y: number, w: number, scale?: number } };
     curve: number;
     colors: RoadColors;
     public isStartLine: boolean = false;
+    public sprites: SpriteObject[] = [];
 
     constructor(index: number, z1: number, z2: number, curve: number, colors: RoadColors) {
         this.index = index;
