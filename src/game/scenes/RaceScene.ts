@@ -4,6 +4,7 @@ import { Starfield } from '../Starfield';
 import { TrackManager } from '../road/TrackManager';
 import { RoadRenderer } from '../road/RoadRenderer';
 import { track1 } from '../tracks/track1';
+import { EnemyVehicle } from '../elements/EnemyVehicle';
 
 export class RaceScene extends Scene {
     private playerVehicle!: Phaser.GameObjects.Sprite;
@@ -33,6 +34,8 @@ export class RaceScene extends Scene {
     private totalLaps: number = 3;
     private lastPosition: number = 0;
     private lapText!: Phaser.GameObjects.Text;
+    private rankText!: Phaser.GameObjects.Text;
+    private enemies: EnemyVehicle[] = [];
 
 
     private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -73,12 +76,19 @@ export class RaceScene extends Scene {
             color: '#ffff00'
         }).setDepth(2000);
 
-        // HUD de Rounds
         this.lapText = this.add.text(20, 20, `LAP ${this.currentLap}/${this.totalLaps}`, {
             fontFamily: '"Press Start 2P"',
             fontSize: '24px',
             color: '#ffffff'
         }).setDepth(2000);
+
+        this.rankText = this.add.text(20, 60, 'POS: 1/10', {
+            fontFamily: '"Press Start 2P"',
+            fontSize: '20px',
+            color: '#ffffff'
+        }).setDepth(2000);
+
+        this.createEnemies();
 
         EventBus.emit('current-scene-ready', this);
     }
@@ -112,6 +122,86 @@ export class RaceScene extends Scene {
         if (this.starfield) {
             this.starfield.update();
         }
+
+        this.enemies.forEach(enemy => {
+            if (enemy.finished) {
+                enemy.speed = Math.max(0, enemy.speed - dt * 2000);
+            }
+
+            enemy.z += enemy.speed * dt;
+
+            // DETEÇÃO DE VOLTA PARA NPC
+            if (enemy.z >= this.trackManager.trackLength) {
+                enemy.z -= this.trackManager.trackLength;
+                enemy.laps++;
+                if (enemy.laps >= this.totalLaps) {
+                    enemy.finished = true;
+                }
+            }
+            enemy.lastZ = enemy.z;
+
+            // --- INTELIGÊNCIA DE DESVIO/ULTRAPASSAGEM ---
+            const carAhead = this.getCarAhead(enemy);
+            if (carAhead && (carAhead.z - enemy.z) < 1500 && Math.abs(carAhead.x - enemy.x) < 0.5) {
+                // Se alguém está na frente e na mesma zona lateral, muda de faixa
+                enemy.targetX = carAhead.x > 0 ? -0.5 : 0.5;
+            } else if (Math.abs(enemy.x - enemy.targetX) < 0.01) {
+                // Se não há ninguém, garante que está numa das faixas padrão
+                enemy.targetX = enemy.targetX > 0 ? 0.5 : -0.5;
+            }
+
+            // Movimentação suave lateral
+            const steerSpeed = 0.5 * dt;
+            if (Math.abs(enemy.x - enemy.targetX) > 0.01) {
+                const dir = enemy.x < enemy.targetX ? 1 : -1;
+                enemy.x += dir * steerSpeed;
+                enemy.steering = dir;
+            } else {
+                enemy.x = enemy.targetX;
+                enemy.steering = 0;
+            }
+
+            // Clamp para não sair da pista
+            enemy.x = Phaser.Math.Clamp(enemy.x, -0.9, 0.9);
+
+            // --- ATUALIZAÇÃO VISUAL (TILT) ---
+            const segment = this.trackManager.getSegment(enemy.z);
+            const roadCurve = segment.curve || 0;
+            
+            // Força de inclinação baseada na curva da pista + volante do NPC
+            let tilt = enemy.steering + (roadCurve * 0.15);
+            let frameIdx = '00';
+            const absTilt = Math.abs(tilt);
+            
+            if (absTilt > 0.6) frameIdx = '03';
+            else if (absTilt > 0.3) frameIdx = '02';
+            else if (absTilt > 0.05) frameIdx = '01';
+            
+            enemy.frame = frameIdx;
+            enemy.flipX = tilt < 0; 
+        });
+
+        this.updateRankings();
+    }
+
+    private updateRankings() {
+        const trackLen = this.trackManager.trackLength;
+        
+        // Calcula a distância total percorrida por cada um
+        const participants = [
+            { name: 'PLAYER', dist: (this.currentLap - 1) * trackLen + this.trackManager.position, isPlayer: true },
+            ...this.enemies.map(e => ({ name: `AI ${e.id + 1}`, dist: e.laps * trackLen + e.z, isPlayer: false }))
+        ];
+
+        // Ordena por distância (descendente)
+        participants.sort((a, b) => b.dist - a.dist);
+
+        // Encontra a posição do jogador
+        const playerPos = participants.findIndex(p => p.isPlayer) + 1;
+        const total = participants.length;
+
+        const suffix = ['st', 'nd', 'rd', 'th'][Math.min(playerPos - 1, 3)];
+        this.rankText.setText(`POS: ${playerPos}${playerPos > 3 ? 'th' : suffix} / ${total}`);
     }
 
     private handleInput(dt: number) {
@@ -237,10 +327,11 @@ export class RaceScene extends Scene {
 
         RoadRenderer.render(
             this.roadGraphics,
-            this.spriteGroup, // ADICIONE ESTE PARÂMETRO
+            this.spriteGroup, // O grupo que você criou no create()
             this.scale.width,
             this.scale.height * 0.35,
-            segmentsToRender
+            segmentsToRender,
+            this.enemies // O array de 10 carros
         );
     }
 
@@ -271,8 +362,62 @@ export class RaceScene extends Scene {
                 onComplete: () => msg.destroy()
             });
 
-            // Som de bónus
-            this.sound.play('Bonus');
+            // Use o sistema de áudio do Phaser de forma leve
+            if (this.sound.get('Bonus')) {
+                this.sound.play('Bonus', { volume: 0.5 });
+            }
         }
+    }
+
+    private createEnemies() {
+        for (let i = 0; i < 9; i++) {
+            const lane = Phaser.Math.RND.pick([-0.5, 0.5]);
+            const startZ = (i + 1) * 3000;
+            this.enemies.push({
+                id: i,
+                z: startZ,
+                x: lane,
+                speed: Phaser.Math.Between(7000, 11000), // Mais velozes e competitivos
+                color: `r0${Phaser.Math.Between(1, 5)}`,
+                frame: '00',
+                targetX: lane,
+                steering: 0,
+                flipX: false,
+                laps: 0,
+                lastZ: startZ,
+                finished: false,
+                percent: 0
+            });
+        }
+    }
+
+    private getCarAhead(subject: EnemyVehicle) {
+        let closest: any = null;
+        let minDist = 2000;
+
+        // Check other NPCs
+        this.enemies.forEach(other => {
+            if (other.id === subject.id) return;
+            let dist = other.z - subject.z;
+            // Trata o wrap-around da pista
+            if (dist < 0) dist += this.trackManager.trackLength;
+            
+            if (dist > 0 && dist < minDist) {
+                closest = other;
+                minDist = dist;
+            }
+        });
+
+        // Check if player is ahead (and within range)
+        const playerZ = this.trackManager.position;
+        let playerDist = playerZ - subject.z;
+        if (playerDist < 0) playerDist += this.trackManager.trackLength;
+
+        if (playerDist > 0 && playerDist < minDist) {
+            // Player lateral range is -1 to 1, we use this.playerX from the class
+            closest = { z: playerZ, x: this.playerX };
+        }
+
+        return closest;
     }
 }

@@ -140,4 +140,12 @@ export class TrackManager {
             dx += segment.curve;
         }
     }
+
+    public getSegment(z: number): RoadSegment {
+        // Encontra o index do segmento baseado no Z (assumindo segmentLength fixo de 200 ou calculado)
+        // No RoadManager original o segmentLength é 200 (veja track1.ts)
+        const segmentLength = 200; 
+        const index = Math.floor(z / segmentLength) % this.segments.length;
+        return this.segments[index < 0 ? 0 : index];
+    }
 }
