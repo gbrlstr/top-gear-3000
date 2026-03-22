@@ -256,10 +256,8 @@ export class RaceScene extends Scene {
             this.lapText.setText(`LAP ${this.currentLap}/${this.totalLaps}`);
 
             // Efeito visual de "LAP COMPLETED"
-            if (this.currentLap === this.totalLaps) {
-                this.lapText.setText("FINAL LAP!");
-            }
-            const msg = this.add.text(this.scale.width / 2, this.scale.height / 2, `LAP ${this.currentLap}/${this.totalLaps}`, {
+            const lapText = this.currentLap === this.totalLaps ? "FINAL LAP!" : `LAP ${this.currentLap}/${this.totalLaps}`;
+            const msg = this.add.text(this.scale.width / 2, this.scale.height / 2, lapText, {
                 fontFamily: '"Press Start 2P"',
                 fontSize: '40px',
                 color: '#ffff00'

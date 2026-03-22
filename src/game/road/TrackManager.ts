@@ -56,7 +56,7 @@ export class TrackManager {
 
                 // MARCAÇÃO DA LINHA DE CHEGADA:
                 // Vamos marcar os primeiros 15 segmentos (1500 unidades de Z se o length for 100)
-                if (segmentIndex >= 0 && segmentIndex < 10) {
+                if (segmentIndex >= 0 && segmentIndex < 8) {
                     segment.isStartLine = true;
                 }
 
