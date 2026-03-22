@@ -14,7 +14,7 @@ export class RaceScene extends Scene {
     private starfield!: Starfield;
 
     // Player variables
-    private playerX = 0;
+    private playerX = -0.6; // Ajuste o X do player aqui (-1.0 a 1.0)
     private speed = 0;
 
     // Constants
@@ -35,7 +35,11 @@ export class RaceScene extends Scene {
     private lastPosition: number = 0;
     private lapText!: Phaser.GameObjects.Text;
     private rankText!: Phaser.GameObjects.Text;
+    private countdownText!: Phaser.GameObjects.Text;
     private enemies: EnemyVehicle[] = [];
+
+    private countdownTimer: number = 10;
+    private isRacing: boolean = false;
 
 
     private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -60,8 +64,8 @@ export class RaceScene extends Scene {
         this.spriteGroup = this.add.group().setDepth(20);
 
         // Veículo do jogador
-        this.playerVehicle = this.add.sprite(this.scale.width / 2, this.scale.height - 100, 'vehicles', 'rear_r01_c00');
-        this.playerVehicle.setScale(4);
+        this.playerVehicle = this.add.sprite(this.scale.width / 2, this.scale.height - 100, 'vehicles', 'rear_r11_c00');
+        this.playerVehicle.setScale(3.5);
         this.playerVehicle.setDepth(1000);
 
         // Controles
@@ -88,6 +92,14 @@ export class RaceScene extends Scene {
             color: '#ffffff'
         }).setDepth(2000);
 
+        this.countdownText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY - 50, '10', {
+            fontFamily: '"Press Start 2P"',
+            fontSize: '120px',
+            color: '#ff0000',
+            stroke: '#000000',
+            strokeThickness: 8
+        }).setOrigin(0.5).setDepth(3000);
+
         this.createEnemies();
 
         EventBus.emit('current-scene-ready', this);
@@ -95,6 +107,41 @@ export class RaceScene extends Scene {
 
     update(_time: number, delta: number) {
         const dt = delta / 1000;
+
+        if (!this.isRacing) {
+            this.countdownTimer -= dt;
+            const displayTime = Math.ceil(this.countdownTimer);
+
+            if (displayTime > 0) {
+                this.countdownText.setText(displayTime.toString());
+            } else {
+                this.isRacing = true;
+                this.countdownText.setText('GO!');
+                this.countdownText.setColor('#00ff00');
+
+                this.time.delayedCall(1500, () => {
+                    this.tweens.add({
+                        targets: this.countdownText,
+                        alpha: 0,
+                        duration: 500,
+                        onComplete: () => this.countdownText.setVisible(false)
+                    });
+                });
+            }
+
+            // Garante que os inimigos fiquem retos e parados durante o countdown
+            this.enemies.forEach(enemy => {
+                enemy.frame = '00';
+                enemy.flipX = false;
+                enemy.steering = 0;
+                enemy.targetX = enemy.x; // Mantém na posição inicial
+            });
+
+            this.renderRoad();
+            if (this.starfield) this.starfield.update();
+            this.updateRankings();
+            return;
+        }
 
         this.handleInput(dt);
 
@@ -164,21 +211,9 @@ export class RaceScene extends Scene {
             // Clamp para não sair da pista
             enemy.x = Phaser.Math.Clamp(enemy.x, -0.9, 0.9);
 
-            // --- ATUALIZAÇÃO VISUAL (TILT) ---
-            const segment = this.trackManager.getSegment(enemy.z);
-            const roadCurve = segment.curve || 0;
-            
-            // Força de inclinação baseada na curva da pista + volante do NPC
-            let tilt = enemy.steering + (roadCurve * 0.15);
-            let frameIdx = '00';
-            const absTilt = Math.abs(tilt);
-            
-            if (absTilt > 0.6) frameIdx = '03';
-            else if (absTilt > 0.3) frameIdx = '02';
-            else if (absTilt > 0.05) frameIdx = '01';
-            
-            enemy.frame = frameIdx;
-            enemy.flipX = tilt < 0; 
+            // --- ATUALIZAÇÃO VISUAL (FIXA: SEM CURVA PARA NPCs) ---
+            enemy.frame = '00';
+            enemy.flipX = false;
         });
 
         this.updateRankings();
@@ -186,7 +221,7 @@ export class RaceScene extends Scene {
 
     private updateRankings() {
         const trackLen = this.trackManager.trackLength;
-        
+
         // Calcula a distância total percorrida por cada um
         const participants = [
             { name: 'PLAYER', dist: (this.currentLap - 1) * trackLen + this.trackManager.position, isPlayer: true },
@@ -370,21 +405,47 @@ export class RaceScene extends Scene {
     }
 
     private createEnemies() {
+        // CORES: Podes adicionar ou remover cores aqui (r00 a r19)
+        const colors = ['r00', 'r03', 'r05', 'r07', 'r11', 'r14', 'r17', 'r19'];
+
         for (let i = 0; i < 9; i++) {
-            const lane = Phaser.Math.RND.pick([-0.5, 0.5]);
-            const startZ = (i + 1) * 3000;
+            // GRID DE LARGADA:
+            // O Player está fixo na tela em Z=0.
+            // Para que os inimigos não fiquem em cima do player, começamos em Z=400.
+
+            const row = Math.floor(i / 2);
+
+            // ESPAÇAMENTO Z: Aumenta o 400 para distanciar as filas longitudinalmente
+            const z = 2550 - (row * 400);
+
+            // POSIÇÃO X: -0.6 é esquerda, 0.45 é direita. 
+            // AJUSTE AQUI para aproximar os carros do centro ou borda
+            const x = (i % 2 === 0) ? -0.20 : -0.6;
+
+            let finalX = x;
+            let finalZ = z;
+
+            // GRID DE LARGADA FINAL:
+            // NPCs em 5 filas, com buffer Z=400 para o Player
+            if (i === 8) {
+                finalZ = 2750 - (row * 400);
+                finalX = -0.20;
+            }
+
+
+            const color = colors[i % colors.length];
             this.enemies.push({
                 id: i,
-                z: startZ,
-                x: lane,
-                speed: Phaser.Math.Between(7000, 11000), // Mais velozes e competitivos
-                color: `r0${Phaser.Math.Between(1, 5)}`,
+                z: finalZ,
+                x: finalX,
+                speed: Phaser.Math.Between(7000, 11000),
+                color: color,
                 frame: '00',
-                targetX: lane,
+                targetX: finalX,
                 steering: 0,
                 flipX: false,
                 laps: 0,
-                lastZ: startZ,
+                lastZ: finalZ,
                 finished: false,
                 percent: 0
             });
@@ -401,7 +462,7 @@ export class RaceScene extends Scene {
             let dist = other.z - subject.z;
             // Trata o wrap-around da pista
             if (dist < 0) dist += this.trackManager.trackLength;
-            
+
             if (dist > 0 && dist < minDist) {
                 closest = other;
                 minDist = dist;

@@ -32,7 +32,6 @@ export class RoadRenderer {
             // --- CAMADA 1: CHÃO (Grama e Zebra) ---
             graphics.fillStyle(segment.colors.grass);
             graphics.fillRect(0, p2.y, width, p1.y - p2.y);
-
             this.drawPolygon(graphics, segment.colors.rumble, p1.x, p1.y, p1.w * 1.15, p2.x, p2.y, p2.w * 1.15);
 
             // --- CAMADA 2: ESTRADA (Asfalto ou Linha de Chegada) ---
@@ -56,25 +55,34 @@ export class RoadRenderer {
             }
 
             // --- CAMADA 3: OBJETOS LATERAIS (Árvores e Placas) ---
+            // Importante: Desenhar os sprites DEPOIS da estrada para eles ficarem por cima do asfalto
             for (const obj of segment.sprites) {
                 const spriteX = p1.x + (p1.w * obj.offset);
-                const spriteScale = p1.scale! * (obj.scale || 1) * 800; // Ajuste o 800 conforme necessário
-
+                const spriteScale = p1.scale! * (obj.scale || 1) * 800;
                 this.renderAtPosition(spriteGroup, allChildren, spriteCount++, obj.source, obj.frame, spriteX, p1.y, spriteScale);
             }
 
             // --- CAMADA 4: CARROS INIMIGOS (NPCs) ---
             // Verifica se há um inimigo neste trecho Z da pista
             for (const enemy of enemies) {
-                // Checa se o Z do inimigo está dentro deste segmento
+                // Corrigido para verificar se o inimigo está entre p1.z e p2.z
                 if (enemy.z >= segment.p1.world.z && enemy.z < segment.p2.world.z) {
                     const carX = p1.x + (p1.w * enemy.x);
-                    // Escala baseada na projeção do segmento (multiplicador maior para carros)
                     const carScale = p1.scale! * 4000;
-
-                    // Constrói o nome do frame (ex: rear_r01_c00) baseado nas propriedades do inimigo
-                    const frameName = `rear_${enemy.color}_c${enemy.frame}`;
-                    this.renderAtPosition(spriteGroup, allChildren, spriteCount++, 'vehicles', frameName, carX, p1.y, carScale);
+                    const imageKey = `rear_${enemy.color}_c${enemy.frame}`;
+                    // Passa o flipX do inimigo para a função de renderização
+                    const finalFlipX = enemy.frame === '00' ? false : enemy.flipX;
+                    this.renderAtPosition(
+                        spriteGroup,
+                        allChildren,
+                        spriteCount++,
+                        'vehicles',
+                        imageKey,
+                        carX,
+                        p1.y,
+                        carScale,
+                        finalFlipX
+                    );
                 }
             }
         }
