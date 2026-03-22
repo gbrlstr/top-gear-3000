@@ -48,7 +48,7 @@ export class TrackManager {
                         segment.sprites.push({
                             source: 'sign_curve',
                             offset: isLeftTurn ? 1.5 : -1.5,
-                            frame: isLeftTurn ? 1 : 0, 
+                            frame: isLeftTurn ? 1 : 0,
                             scale: 2.0
                         });
                     }
@@ -56,7 +56,7 @@ export class TrackManager {
 
                 // MARCAÇÃO DA LINHA DE CHEGADA:
                 // Vamos marcar os primeiros 15 segmentos (1500 unidades de Z se o length for 100)
-                if (segmentIndex >= 0 && segmentIndex < 8) {
+                if (segmentIndex >= 0 && segmentIndex < 10) {
                     segment.isStartLine = true;
                 }
 

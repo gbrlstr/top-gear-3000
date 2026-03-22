@@ -50,6 +50,14 @@ export class Preloader extends Scene {
         this.load.audio('menu-title', 'sounds/menu/01Title.mp3');
         this.load.audio('menu-highlight', 'sounds/effects/Highlight.wav');
         this.load.audio('menu-select', 'sounds/effects/Select.wav');
+
+        //  SFX
+        this.load.audio('Bonus', 'sounds/effects/Bonus.wav');
+        this.load.audio('Crash', 'sounds/effects/Crash.wav');
+        this.load.audio('Engine', 'sounds/effects/Engine.wav');
+        this.load.audio('Explosion', 'sounds/effects/Explosion.wav');
+        this.load.audio('Nitro', 'sounds/effects/Nitro.wav');
+        this.load.audio('Turbo', 'sounds/effects/Turbo.wav');
     }
 
     create() {

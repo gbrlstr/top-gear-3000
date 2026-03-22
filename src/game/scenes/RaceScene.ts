@@ -29,6 +29,11 @@ export class RaceScene extends Scene {
 
     private steeringValue = 0;
 
+    private currentLap: number = 1;
+    private totalLaps: number = 3;
+    private lastPosition: number = 0;
+    private lapText!: Phaser.GameObjects.Text;
+
 
     private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
 
@@ -68,6 +73,13 @@ export class RaceScene extends Scene {
             color: '#ffff00'
         }).setDepth(2000);
 
+        // HUD de Rounds
+        this.lapText = this.add.text(20, 20, `LAP ${this.currentLap}/${this.totalLaps}`, {
+            fontFamily: '"Press Start 2P"',
+            fontSize: '24px',
+            color: '#ffffff'
+        }).setDepth(2000);
+
         EventBus.emit('current-scene-ready', this);
     }
 
@@ -76,11 +88,21 @@ export class RaceScene extends Scene {
 
         this.handleInput(dt);
 
+        const currentPos = this.trackManager.position;
+
+        // DETEÇÃO DE VOLTA: 
+        // Se a posição "pulou" do fim para o início
+        if (currentPos < this.lastPosition && this.speed > 0) {
+            this.onLapComplete();
+        }
+
         // Atualiza a posição na pista
         this.trackManager.update(this.speed * dt);
 
         this.renderRoad();
         this.updatePlayerVisuals(_time);
+
+        this.lastPosition = currentPos;
 
         // EXIBIÇÃO EM KM/H (Realista)
         // Dividimos por 40 para que 12000 no código = 300 KM/H no ecrã
@@ -220,5 +242,39 @@ export class RaceScene extends Scene {
             this.scale.height * 0.35,
             segmentsToRender
         );
+    }
+
+    private onLapComplete() {
+        this.currentLap++;
+
+        if (this.currentLap > this.totalLaps) {
+            this.speed = 0;
+            this.speedText.setText("FINISH!");
+            // Aqui podes disparar uma cena de Game Over ou Vitória
+            this.scene.start('GameOver', { score: this.speed });
+        } else {
+            this.lapText.setText(`LAP ${this.currentLap}/${this.totalLaps}`);
+
+            // Efeito visual de "LAP COMPLETED"
+            if (this.currentLap === this.totalLaps) {
+                this.lapText.setText("FINAL LAP!");
+            }
+            const msg = this.add.text(this.scale.width / 2, this.scale.height / 2, `LAP ${this.currentLap}/${this.totalLaps}`, {
+                fontFamily: '"Press Start 2P"',
+                fontSize: '40px',
+                color: '#ffff00'
+            }).setOrigin(0.5).setDepth(3000);
+
+            this.tweens.add({
+                targets: msg,
+                alpha: 0,
+                y: 100,
+                duration: 2000,
+                onComplete: () => msg.destroy()
+            });
+
+            // Som de bónus
+            this.sound.play('Bonus');
+        }
     }
 }
