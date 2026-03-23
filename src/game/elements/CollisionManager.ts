@@ -1,6 +1,7 @@
 import { PlayerManager } from './PlayerManager';
 import { EnemyVehicle } from './EnemyVehicle';
 import { TrackManager } from '../road/TrackManager';
+import { RaceAudioManager } from '../audio/RaceAudioManager';
 
 export class CollisionManager {
     // Hitbox ajustada ao corpo visível do sprite, não à imagem inteira.
@@ -208,9 +209,13 @@ export class CollisionManager {
 
     private static playCollisionFeedback(scene: Phaser.Scene, shakeIntensity: number, volume: number) {
         scene.cameras.main.shake(70, shakeIntensity);
-        if (scene.sound.get('Collision')) {
-            scene.sound.play('Collision', { volume });
+        const audio = RaceAudioManager.fromScene(scene);
+        if (volume <= 0.28) {
+            audio?.playSkid();
+            return;
         }
+
+        audio?.playCollision(volume >= 0.4);
     }
 
     private static getWrappedDistance(targetZ: number, sourceZ: number, trackLength: number) {

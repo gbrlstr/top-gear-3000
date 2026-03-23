@@ -1,4 +1,5 @@
 import { Scene } from 'phaser';
+import { RaceAudioManager } from '../audio/RaceAudioManager';
 
 export class HUDManager {
     private static readonly SPEED_BAR_FRAMES = [
@@ -37,7 +38,7 @@ export class HUDManager {
 
     public countdownText!: Phaser.GameObjects.Text;
 
-    private countdownTimer: number = 10;
+    private countdownTimer: number = 3;
     private currentLap: number = 1;
     private totalLaps: number = 3;
     private raceTime: number = 0;
@@ -55,7 +56,7 @@ export class HUDManager {
         // Na referencia, os números vêm antes do "POS".
         const posLabel = this.scene.add.sprite(220, 0, 'hud', 'label_pos').setOrigin(0, 0).setScale(3);
         this.posContainer.add(posLabel);
-        this.updateGraphicalText(this.posContainer, '0/10', 0, 0, 3);
+        this.updateGraphicalText(this.posContainer, '0/20', 0, 0, 3);
 
         // Speed Bar (below POS), estilo Top Gear.
         this.energyBar = this.scene.add.container(58, 62).setDepth(2000);
@@ -98,7 +99,7 @@ export class HUDManager {
         this.updateGraphicalSpeed('0');
 
         // Countdown HUD (Keep as text for now or replace with digit_0-9 if they look better)
-        this.countdownText = this.scene.add.text(width / 2, height / 2 - 50, '10', {
+        this.countdownText = this.scene.add.text(width / 2, height / 2 - 50, '3', {
             fontFamily: '"Press Start 2P"',
             fontSize: '120px',
             color: '#ff0000',
@@ -159,10 +160,12 @@ export class HUDManager {
 
         if (displayTime > 0) {
             this.countdownText.setText(displayTime.toString());
+            RaceAudioManager.fromScene(this.scene)?.handleCountdown(displayTime);
             return false;
         } else {
             this.countdownText.setText('GO!');
             this.countdownText.setColor('#00ff00');
+            RaceAudioManager.fromScene(this.scene)?.handleCountdown(0);
 
             this.scene.time.delayedCall(1500, () => {
                 this.scene.tweens.add({
@@ -308,9 +311,7 @@ export class HUDManager {
             onComplete: () => msg.destroy()
         });
 
-        if (this.scene.sound.get('Bonus')) {
-            this.scene.sound.play('Bonus', { volume: 0.5 });
-        }
+        RaceAudioManager.fromScene(this.scene)?.playBonus();
     }
 
     private updateSpeedBar(speedPercent: number) {

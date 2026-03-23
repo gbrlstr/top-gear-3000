@@ -11,6 +11,7 @@ import { PlayerManager } from '../elements/PlayerManager';
 import { CollisionManager } from '../elements/CollisionManager';
 import { TrackDebugView } from '../utils/TrackDebugView';
 import { getPlayerName, mergeLeaguePoints, RaceParticipant, sortRaceParticipants } from '../league/league';
+import { RaceAudioManager } from '../audio/RaceAudioManager';
 
 export class RaceScene extends Scene {
     private trackId: number = 1;
@@ -20,6 +21,7 @@ export class RaceScene extends Scene {
     private hudManager!: HUDManager;
     private enemyManager!: EnemyManager;
     private playerManager!: PlayerManager;
+    private raceAudio!: RaceAudioManager;
     private debugView!: TrackDebugView;
 
     private roadWidth = 2000;
@@ -81,6 +83,10 @@ export class RaceScene extends Scene {
         this.playerManager = new PlayerManager(this);
         this.playerManager.create();
 
+        // Áudio dinâmico da corrida
+        this.raceAudio = new RaceAudioManager(this);
+        this.raceAudio.create();
+
         // Inimigos
         this.enemyManager = new EnemyManager();
         this.enemyManager.createEnemies();
@@ -104,7 +110,7 @@ export class RaceScene extends Scene {
 
         if (!this.isRacing) {
             const playerWorldZ = this.getPlayerWorldZ();
-            const countdownFinished = this.hudManager.updateCountdown(delta / 300);
+            const countdownFinished = this.hudManager.updateCountdown(dt);
 
             if (countdownFinished) {
                 this.isRacing = true;
@@ -122,6 +128,12 @@ export class RaceScene extends Scene {
 
             this.playerManager.updateVisuals(_time, this.trackManager, this.camHeight);
             this.hudManager.updateCarLife(this.playerManager.health / this.playerManager.maxHealth);
+            this.raceAudio.update(
+                this.playerManager.speed,
+                this.playerManager.health / this.playerManager.maxHealth,
+                this.isRacing && !this.playerFinished,
+                this.playerManager.isBroken
+            );
 
             // TRACKERS UPDATE
             const playerProgress = this.trackManager.position / this.trackManager.trackLength;
@@ -148,6 +160,12 @@ export class RaceScene extends Scene {
 
         this.hudManager.updateSpeed(this.playerManager.speed);
         this.hudManager.updateCarLife(this.playerManager.health / this.playerManager.maxHealth);
+        this.raceAudio.update(
+            this.playerManager.speed,
+            this.playerManager.health / this.playerManager.maxHealth,
+            this.isRacing && !this.playerFinished,
+            this.playerManager.isBroken
+        );
 
         const playerProgress = this.trackManager.position / this.trackManager.trackLength;
         this.hudManager.update(dt, playerProgress);

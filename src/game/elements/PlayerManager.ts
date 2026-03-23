@@ -1,5 +1,6 @@
 import { Scene } from 'phaser';
 import { TrackManager } from '../road/TrackManager';
+import { RaceAudioManager } from '../audio/RaceAudioManager';
 
 export class PlayerManager {
     private static readonly START_LANE_X = -0.18;
@@ -126,12 +127,7 @@ export class PlayerManager {
             this.isBroken = true;
             this.speed = 0;
             scene.cameras.main.shake(160, 0.01);
-
-            if (scene.sound.get('Explosion')) {
-                scene.sound.play('Explosion', { volume: 0.45 });
-            } else if (scene.sound.get('Crash')) {
-                scene.sound.play('Crash', { volume: 0.45 });
-            }
+            RaceAudioManager.fromScene(scene)?.playExplosion();
         }
     }
 

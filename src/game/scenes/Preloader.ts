@@ -56,11 +56,21 @@ export class Preloader extends Scene {
 
         //  SFX
         this.load.audio('Bonus', 'sounds/effects/Bonus.wav');
-        this.load.audio('Crash', 'sounds/effects/Crash.wav');
-        this.load.audio('Engine', 'sounds/effects/Engine.wav');
-        this.load.audio('Explosion', 'sounds/effects/Explosion.wav');
-        this.load.audio('Nitro', 'sounds/effects/Nitro.wav');
-        this.load.audio('Turbo', 'sounds/effects/Turbo.wav');
+        this.load.audio('Collision', 'sounds/effects/Collision.wav');
+        this.load.audio('CollisionHeavy', 'sounds/effects/Collision 2.wav');
+        this.load.audio('Crash', 'sounds/effects/Collision.wav');
+        this.load.audio('Explosion', 'sounds/effects/Collision 2.wav');
+        this.load.audio('Engine', 'sounds/effects/Car Engine.wav');
+        this.load.audio('EngineLow', 'sounds/effects/Car Engine.wav');
+        this.load.audio('EngineMid', 'sounds/effects/Car Engine 2.wav');
+        this.load.audio('EngineHigh', 'sounds/effects/Car Engine 3.wav');
+        this.load.audio('Go', 'sounds/effects/Go.wav');
+        this.load.audio('Ready', 'sounds/effects/Ready.wav');
+        this.load.audio('Skid', 'sounds/effects/Skid.wav');
+        this.load.audio('LowEnergy', 'sounds/effects/Low Energy.wav');
+        this.load.audio('Nitro', 'sounds/effects/Nitro Boost.wav');
+        this.load.audio('Turbo', 'sounds/effects/Nitro Boost 2.wav');
+        this.load.audio('Repair', 'sounds/effects/Repair.wav');
     }
 
     create() {
