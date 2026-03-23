@@ -20,6 +20,10 @@ export interface TrackData {
     }>;
     trackMapFrame?: string;
     trackMapOffset?: number;
+    macroPath?: Array<{
+        x: number;
+        z: number;
+    }>;
 }
 
 export interface TrackSegmentData {

@@ -18,6 +18,11 @@ export class TrackManager {
 
     private generateMacroGeometry(track: TrackData) {
         this.macroPoints = [];
+        if (track.macroPath && track.macroPath.length > 1) {
+            this.macroPoints = this.expandMacroPath(track.macroPath);
+            return;
+        }
+
         let curAngle = 0;
         let curX = 0;
         let curZ = 0;
@@ -41,6 +46,26 @@ export class TrackManager {
                 this.macroPoints.push({ x: curX, z: curZ });
             }
         });
+    }
+
+    private expandMacroPath(points: { x: number, z: number }[]) {
+        const expanded: { x: number, z: number }[] = [];
+
+        for (let i = 0; i < points.length; i++) {
+            const current = points[i];
+            const next = points[(i + 1) % points.length];
+            const steps = Math.max(1, Math.ceil(Math.hypot(next.x - current.x, next.z - current.z) * 3));
+
+            for (let step = 0; step < steps; step++) {
+                const t = step / steps;
+                expanded.push({
+                    x: current.x + (next.x - current.x) * t,
+                    z: current.z + (next.z - current.z) * t
+                });
+            }
+        }
+
+        return expanded;
     }
 
     public getMacroPoints(): { x: number, z: number }[] {
