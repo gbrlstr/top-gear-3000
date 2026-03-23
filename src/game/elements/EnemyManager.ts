@@ -3,7 +3,7 @@ import { EnemyVehicle } from './EnemyVehicle';
 export class EnemyManager {
     public enemies: EnemyVehicle[] = [];
 
-    constructor() {}
+    constructor() { }
 
     createEnemies() {
         // CORES: Podes adicionar ou remover cores aqui (r00 a r19)

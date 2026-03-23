@@ -46,6 +46,9 @@ export class Preloader extends Scene {
         //  Vehicles
         this.load.atlas('vehicles', 'vehicle/full_sheet_clean.png', 'vehicle/atlas_auto.json');
 
+        //  HUD
+        this.load.atlas('hud', 'hud/full_sheet_clean.png', 'hud/atlas_auto.json');
+
         //  Sounds
         this.load.audio('menu-title', 'sounds/menu/01Title.mp3');
         this.load.audio('menu-highlight', 'sounds/effects/Highlight.wav');

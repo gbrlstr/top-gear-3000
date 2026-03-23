@@ -108,6 +108,7 @@ export class RaceScene extends Scene {
         this.lastPosition = currentPos;
 
         this.hudManager.updateSpeed(this.playerManager.speed);
+        this.hudManager.update(dt);
 
         if (this.starfield) {
             this.starfield.update();
