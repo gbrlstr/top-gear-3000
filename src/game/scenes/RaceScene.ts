@@ -186,8 +186,15 @@ export class RaceScene extends Scene {
         if (this.currentLap > this.totalLaps) {
             this.playerManager.speed = 0;
             this.hudManager.setFinish();
-            // Aqui podes disparar uma cena de Game Over ou Vitória
-            this.scene.start('GameOver', { score: this.playerManager.speed });
+
+            // Captura o ranking final
+            const trackLen = this.trackManager.trackLength;
+            const playerDist = (this.totalLaps) * trackLen; // Player terminou tudo
+            const finalRankings = this.enemyManager.getParticipants(playerDist, trackLen);
+
+            this.time.delayedCall(2000, () => {
+                this.scene.start('ResultsScene', { rankings: finalRankings });
+            });
         } else {
             this.hudManager.onLapComplete(this.currentLap, this.totalLaps);
         }

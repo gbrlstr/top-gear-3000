@@ -7,6 +7,7 @@ import { AUTO, Game } from 'phaser';
 import { Preloader } from './scenes/Preloader';
 import { PlayerNameScene } from './scenes/PlayerNameScene';
 import { RaceScene } from './scenes/RaceScene';
+import { ResultsScene } from './scenes/ResultsScene';
 
 // Find out more information about the Game Config at:
 // https://docs.phaser.io/api-documentation/typedef/types-core#gameconfig
@@ -24,7 +25,8 @@ const config: Phaser.Types.Core.GameConfig = {
         MainGame,
         GameOver,
         PlayerNameScene,
-        RaceScene
+        RaceScene,
+        ResultsScene
     ],
     physics: {
         default: 'arcade',

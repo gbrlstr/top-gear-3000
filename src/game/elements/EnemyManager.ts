@@ -135,7 +135,7 @@ export class EnemyManager {
             // --- ATUALIZAÇÃO VISUAL BASEADA EM CURVA E STEERING ---
             let steerFrame = '00';
             const totalSteer = enemy.steering + (curve * 0.1); // Combina o desvio do carro com a curva da pista
-            
+
             if (Math.abs(totalSteer) > 0.6) steerFrame = '03';
             else if (Math.abs(totalSteer) > 0.3) steerFrame = '02';
             else if (Math.abs(totalSteer) > 0.1) steerFrame = '01';
@@ -176,7 +176,7 @@ export class EnemyManager {
     getParticipants(playerDist: number, trackLen: number) {
         const participants = [
             { name: 'PLAYER', dist: playerDist, isPlayer: true },
-            ...this.enemies.map(e => ({ name: `AI ${e.id + 1}`, dist: e.laps * trackLen + e.z, isPlayer: false }))
+            ...this.enemies.map(e => ({ name: `PLAYER ${e.id + 1}`, dist: e.laps * trackLen + e.z, isPlayer: false }))
         ];
 
         // Ordena por distância (descendente)
