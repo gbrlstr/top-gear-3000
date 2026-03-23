@@ -9,6 +9,9 @@ export class HUDManager {
     private posContainer!: Phaser.GameObjects.Container;
     private timeContainer!: Phaser.GameObjects.Container;
     private energyBar!: Phaser.GameObjects.Container;
+    private trackMap!: Phaser.GameObjects.Sprite;
+    private playerTracker!: Phaser.GameObjects.Sprite;
+    private trackMapOffset: number = 0;
 
     public countdownText!: Phaser.GameObjects.Text;
 
@@ -21,9 +24,9 @@ export class HUDManager {
         this.scene = scene;
     }
 
-    create() {
-        const width = this.scene.scale.width;
-        const height = this.scene.scale.height;
+    create(trackMapFrame: string = 'track_01', trackMapOffset: number = 0) {
+        const { width, height } = this.scene.scale;
+        this.trackMapOffset = trackMapOffset;
 
         // --- TOP LEFT: POSITION & ENERGY ---
         this.posContainer = this.scene.add.container(20, 20).setDepth(2000);
@@ -36,15 +39,23 @@ export class HUDManager {
         // Energy Bar (below POS)
         this.energyBar = this.scene.add.container(20, 50).setDepth(2000);
         for (let i = 0; i < 10; i++) {
-            const segment = this.scene.add.sprite(i * 14, 0, 'hud', 'bar_green').setOrigin(0, 0).setScale(2);
+            const segment = this.scene.add.sprite(i * 14, 0, 'hud', 'bar_green').setOrigin(0, 0).setScale(3);
             this.energyBar.add(segment);
         }
 
-        // --- TOP RIGHT: LAP ---
-        this.lapContainer = this.scene.add.container(width - 200, 20).setDepth(2000);
+        // --- TOP RIGHT: LAP & TRACK MAP ---
+        this.lapContainer = this.scene.add.container(width - 240, 20).setDepth(2000);
         const lapLabel = this.scene.add.sprite(0, 0, 'hud', 'label_lap').setOrigin(0, 0).setScale(3);
         this.lapContainer.add(lapLabel);
         this.updateGraphicalText(this.lapContainer, '1/3', 80, 0, 3);
+
+        // Track Map (below LAP)
+        this.trackMap = this.scene.add.sprite(width - 110, 160, 'hud', trackMapFrame).setOrigin(1, 0).setScale(4);
+        this.trackMap.setDepth(2000);
+
+        // Player Tracker Dot (Red dot as the user changed it to red)
+        this.playerTracker = this.scene.add.sprite(0, 0, 'hud', 'dot_red').setScale(4).setDepth(2001);
+        this.playerTracker.setVisible(false);
 
         // --- TOP CENTER: TIME ---
         this.timeContainer = this.scene.add.container(width / 2 - 100, 20).setDepth(2000);
@@ -139,10 +150,41 @@ export class HUDManager {
 
     private isRacing = false;
 
-    update(dt: number) {
+    update(dt: number, playerProgress: number = 0) {
         if (this.isRacing) {
             this.raceTime += dt;
             this.updateRaceTime();
+
+            // Update Tracker Dot Position
+            // Approximate position on the 27x37 (scaled 4x) minimap
+            // For track_01 (vertical loop), we can move it along the perimeter
+            // Perimeter = (27+37)*2 = 128 units.
+            // Visual bounds of the minimap sprite (scaled)
+            const mapW = this.trackMap.width * 4;
+            const mapH = this.trackMap.height * 4;
+            const margin = 10; // Pixels to stay inside the border
+
+            // Absolute screen coordinates for the path
+            const left = this.trackMap.x - mapW + margin;
+            const right = this.trackMap.x - margin;
+            const top = this.trackMap.y + margin;
+            const bottom = this.trackMap.y + mapH - margin;
+
+            let p = (playerProgress + this.trackMapOffset) % 1;
+            this.playerTracker.setVisible(true);
+            if (p < 0.25) { // Phase 1: Left up
+                this.playerTracker.x = left;
+                this.playerTracker.y = bottom - (p / 0.25) * (bottom - top);
+            } else if (p < 0.5) { // Phase 2: Top right
+                this.playerTracker.x = left + ((p - 0.25) / 0.25) * (right - left);
+                this.playerTracker.y = top;
+            } else if (p < 0.75) { // Phase 3: Right down
+                this.playerTracker.x = right;
+                this.playerTracker.y = top + ((p - 0.5) / 0.25) * (bottom - top);
+            } else { // Phase 4: Bottom left
+                this.playerTracker.x = right - ((p - 0.75) / 0.25) * (right - left);
+                this.playerTracker.y = bottom;
+            }
         }
     }
 
@@ -152,7 +194,7 @@ export class HUDManager {
         const cents = Math.floor((this.raceTime * 100) % 100);
 
         const timeStr = `${mins}'${secs.toString().padStart(2, '0')}"${cents.toString().padStart(2, '0')}`;
-        this.updateGraphicalText(this.timeContainer, timeStr, 0, 0, 2);
+        this.updateGraphicalText(this.timeContainer, timeStr, 0, 0, 3);
     }
 
     updateSpeed(speed: number) {

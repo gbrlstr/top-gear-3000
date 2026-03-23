@@ -138,6 +138,6 @@ export class PlayerManager {
         const projectionScale = (screenY - h2) / (camHeight * h2);
 
         // Apply resolution multiplication factor
-        this.vehicle.setScale(projectionScale * 4500);
+        this.vehicle.setScale(projectionScale * 6000);
     }
 }

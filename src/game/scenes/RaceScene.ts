@@ -55,7 +55,10 @@ export class RaceScene extends Scene {
 
         // Inicializa o Gerenciador de HUD e Inimigos
         this.hudManager = new HUDManager(this);
-        this.hudManager.create();
+        this.hudManager.create(
+            this.trackManager.currentTrack.trackMapFrame || 'track_01',
+            this.trackManager.currentTrack.trackMapOffset || 0
+        );
 
         this.enemyManager = new EnemyManager();
         this.enemyManager.createEnemies();
@@ -108,7 +111,9 @@ export class RaceScene extends Scene {
         this.lastPosition = currentPos;
 
         this.hudManager.updateSpeed(this.playerManager.speed);
-        this.hudManager.update(dt);
+
+        const playerProgress = this.trackManager.position / this.trackManager.trackLength;
+        this.hudManager.update(dt, playerProgress);
 
         if (this.starfield) {
             this.starfield.update();
@@ -153,7 +158,8 @@ export class RaceScene extends Scene {
             this.camDepth,
             this.scale.width,
             this.scale.height,
-            this.roadWidth
+            this.roadWidth,
+            this.scale.height * 0.35
         );
 
 

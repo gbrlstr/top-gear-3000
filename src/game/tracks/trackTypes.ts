@@ -1,4 +1,3 @@
-import { RoadColors } from "../road/RoadSegment";
 
 export interface TrackPalette {
     road: number;
@@ -19,6 +18,8 @@ export interface TrackData {
         curve: number;
         hill: number;
     }>;
+    trackMapFrame?: string;
+    trackMapOffset?: number;
 }
 
 export interface TrackSegmentData {

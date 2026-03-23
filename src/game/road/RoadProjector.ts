@@ -8,7 +8,8 @@ export class RoadProjector {
         cameraDepth: number,
         width: number,
         height: number,
-        roadWidth: number
+        roadWidth: number,
+        horizonY: number
     ) {
         const dz = worldZ - cameraZ;
 
@@ -23,8 +24,8 @@ export class RoadProjector {
         const scale = cameraDepth / dz;
 
         point.screen.scale = scale;
-        point.screen.x = Math.round((width / 2) + scale * (point.world.x - cameraX) * width / 2);
-        point.screen.y = Math.round((height / 2) - scale * (point.world.y - cameraY) * height / 2);
-        point.screen.w = Math.round(scale * roadWidth * width / 2);
+        point.screen.x = (width / 2) + scale * (point.world.x - cameraX) * width / 2;
+        point.screen.y = horizonY - scale * (point.world.y - cameraY) * height / 2;
+        point.screen.w = scale * roadWidth * width / 2;
     }
 }

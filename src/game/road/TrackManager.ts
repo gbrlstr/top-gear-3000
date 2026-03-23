@@ -7,8 +7,10 @@ export class TrackManager {
     trackLength = 0;
     position = 0;
     segmentLength = 150; // Padrão clássico do OutRun
+    public currentTrack: TrackData;
 
     constructor(trackData: TrackData) {
+        this.currentTrack = trackData;
         this.buildTrack(trackData);
     }
 
@@ -96,44 +98,48 @@ export class TrackManager {
         cameraDepth: number,
         width: number,
         height: number,
-        roadWidth: number
+        roadWidth: number,
+        horizonY: number
     ) {
         let x = 0;
         let dx = 0;
 
-        // Descobrimos em qual segmento a câmera está
+        // Índice do segmento onde o carro está
         const startLine = Math.floor(this.position / this.segmentLength);
 
         for (let n = 0; n < segments.length; n++) {
             const segment = segments[n];
 
-            // Se o índice visual (n) somado ao início ultrapassa o total de segmentos,
-            // significa que esse segmento faz parte da 'próxima volta'.
-            // Somamos trackLength para que o RoadProjector coloque ele lá na frente.
+            // LÓGICA DE LOOP: Se o índice visual (startLine + n) ultrapassa o total de segmentos,
+            // somamos o tamanho total da pista para projetá-los no horizonte à frente.
             const loopOffset = (startLine + n) >= this.segments.length ? this.trackLength : 0;
 
+            // Projeção do Ponto 1
             RoadProjector.project(
                 segment.p1,
-                segment.p1.world.z + loopOffset, // Adicionamos o offset aqui
+                segment.p1.world.z + loopOffset,
                 cameraX - x,
                 cameraY,
                 this.position,
                 cameraDepth,
                 width,
                 height,
-                roadWidth
+                roadWidth,
+                horizonY
             );
 
+            // Projeção do Ponto 2
             RoadProjector.project(
                 segment.p2,
-                segment.p2.world.z + loopOffset, // E aqui também
+                segment.p2.world.z + loopOffset,
                 cameraX - (x + dx),
                 cameraY,
                 this.position,
                 cameraDepth,
                 width,
                 height,
-                roadWidth
+                roadWidth,
+                horizonY
             );
 
             x += dx;
@@ -144,7 +150,7 @@ export class TrackManager {
     public getSegment(z: number): RoadSegment {
         // Encontra o index do segmento baseado no Z (assumindo segmentLength fixo de 200 ou calculado)
         // No RoadManager original o segmentLength é 200 (veja track1.ts)
-        const segmentLength = 200; 
+        const segmentLength = 200;
         const index = Math.floor(z / segmentLength) % this.segments.length;
         return this.segments[index < 0 ? 0 : index];
     }

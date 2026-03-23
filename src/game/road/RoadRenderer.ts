@@ -26,31 +26,43 @@ export class RoadRenderer {
             const p1 = segment.p1.screen;
             const p2 = segment.p2.screen;
 
-            // Pula se estiver atrás da câmera ou acima do horizonte
-            if (p1.y <= p2.y || p2.y < horizon) continue;
+            // Pula se estiver atrás da câmera (dz <= 0.1 no projetor já lida com isso)
+            // Se p1.y < p2.y, o segmento está invertido (longe demais ou erro de projeção)
+            if (p1.y < p2.y) continue;
+
+            // Permite renderizar segmentos que tocam o horizonte
+            if (p2.y < horizon - 20) continue;
 
             // --- CAMADA 1: CHÃO (Grama e Zebra) ---
             graphics.fillStyle(segment.colors.grass);
-            graphics.fillRect(0, p2.y, width, p1.y - p2.y);
-            this.drawPolygon(graphics, segment.colors.rumble, p1.x, p1.y, p1.w * 1.15, p2.x, p2.y, p2.w * 1.15);
+            graphics.fillRect(0, p2.y - 1, width, p1.y - p2.y + 1);
+            this.drawPolygon(graphics, segment.colors.rumble, p1.x, p1.y, p1.w * 1.15, p2.x, p2.y - 1, p2.w * 1.15);
 
             // --- CAMADA 2: ESTRADA (Asfalto ou Linha de Chegada) ---
+            // Desenha o asfalto base sempre para garantir que não haja vácuo
+            this.drawPolygon(graphics, segment.colors.road, p1.x, p1.y, p1.w, p2.x, p2.y - 1, p2.w);
+
             if (segment.isStartLine) {
-                this.drawPolygon(graphics, 0xffffff, p1.x, p1.y, p1.w, p2.x, p2.y, p2.w);
-                const columns = 15;
-                const checkW1 = (p1.w * 2) / columns;
-                const checkW2 = (p2.w * 2) / columns;
-                for (let c = 0; c < columns; c++) {
-                    if (c % 2 === 0) {
-                        this.drawPolygon(graphics, 0x000000,
-                            p1.x - p1.w + (c * checkW1) + checkW1 / 2, p1.y, checkW1 / 2,
-                            p2.x - p2.w + (c * checkW2) + checkW2 / 2, p2.y, checkW2 / 2);
+                // 1. Base branca (obrigatória)
+                this.drawPolygon(graphics, 0xffffff, p1.x, p1.y, p1.w, p2.x, p2.y - 1, p2.w);
+
+                // 2. Xadrez (agora visível de mais longe)
+                if (p1.w > 5) { // Diminuído de 30 para 5 para aparecer no horizonte
+                    const columns = 10;
+                    const checkW1 = (p1.w * 2) / columns;
+                    const checkW2 = (p2.w * 2) / columns;
+                    for (let c = 0; c < columns; c++) {
+                        if (c % 2 === 0) {
+                            this.drawPolygon(graphics, 0x000000,
+                                p1.x - p1.w + (c * checkW1) + checkW1 / 2, p1.y, checkW1 / 2,
+                                p2.x - p2.w + (c * checkW2) + checkW2 / 2, p2.y - 1, checkW2 / 2);
+                        }
                     }
                 }
             } else {
-                this.drawPolygon(graphics, segment.colors.road, p1.x, p1.y, p1.w, p2.x, p2.y, p2.w);
+                // Desenha a faixa pontilhada no centro para segmentos normais
                 if (segment.colors.lane) {
-                    this.drawPolygon(graphics, segment.colors.lane, p1.x, p1.y, p1.w * 0.02, p2.x, p2.y, p2.w * 0.02);
+                    this.drawPolygon(graphics, segment.colors.lane, p1.x, p1.y, p1.w * 0.02, p2.x, p2.y - 1, p2.w * 0.02);
                 }
             }
 
@@ -58,7 +70,7 @@ export class RoadRenderer {
             // Importante: Desenhar os sprites DEPOIS da estrada para eles ficarem por cima do asfalto
             for (const obj of segment.sprites) {
                 const spriteX = p1.x + (p1.w * obj.offset);
-                const spriteScale = p1.scale! * (obj.scale || 1) * 800;
+                const spriteScale = p1.scale! * (obj.scale || 1) * 400;
                 this.renderAtPosition(spriteGroup, allChildren, spriteCount++, obj.source, obj.frame, spriteX, p1.y, spriteScale);
             }
 

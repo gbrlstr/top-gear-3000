@@ -18,7 +18,7 @@ export class EnemyManager {
             const row = Math.floor(i / 2);
 
             // ESPAÇAMENTO Z: Aumenta o 400 para distanciar as filas longitudinalmente
-            const z = 2550 - (row * 400);
+            const z = 2550 - (row * 500);
 
             // POSIÇÃO X: -0.3 é esquerda, 0.3 é direita. 
             // AJUSTE AQUI para aproximar os carros do centro ou borda
@@ -30,7 +30,7 @@ export class EnemyManager {
             // GRID DE LARGADA FINAL:
             // NPCs em 5 filas, com buffer Z=400 para o Player
             if (i === 8) {
-                finalZ = 2750 - (row * 400);
+                finalZ = 2750 - (row * 500);
                 finalX = -0.15;
             }
 
@@ -40,7 +40,7 @@ export class EnemyManager {
                 z: finalZ,
                 x: finalX,
                 speed: 0,
-                targetSpeed: Phaser.Math.Between(8000, 14000),
+                targetSpeed: Phaser.Math.Between(7000, 14000),
                 color: color,
                 frame: '00',
                 targetX: finalX,
