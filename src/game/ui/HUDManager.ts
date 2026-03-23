@@ -1,6 +1,23 @@
 import { Scene } from 'phaser';
 
 export class HUDManager {
+    private static readonly SPEED_BAR_FRAMES = [
+        'hud_speedbar_green_1',
+        'hud_speedbar_green_1',
+        'hud_speedbar_green_1',
+        'hud_speedbar_green_1',
+        'hud_speedbar_green_1',
+        'hud_speedbar_green_1',
+        'hud_speedbar_green_1',
+        'hud_speedbar_green_1',
+        'hud_speedbar_green_1',
+        'hud_speedbar_green_1',
+        'hud_speedbar_red_1',
+        'hud_speedbar_red_1',
+        'hud_speedbar_red_1',
+        'hud_speedbar_red_1'
+    ];
+
     private scene: Scene;
 
     // Graphical elements
@@ -9,6 +26,8 @@ export class HUDManager {
     private posContainer!: Phaser.GameObjects.Container;
     private timeContainer!: Phaser.GameObjects.Container;
     private energyBar!: Phaser.GameObjects.Container;
+    private carLife!: Phaser.GameObjects.Container;
+    private speedBarSegments: Phaser.GameObjects.Sprite[] = [];
     private trackMap!: Phaser.GameObjects.Sprite;
     private playerTracker!: Phaser.GameObjects.Sprite;
     private trackMapOffset: number = 0;
@@ -30,29 +49,35 @@ export class HUDManager {
         const { width, height } = this.scene.scale;
         this.trackMapOffset = trackMapOffset;
 
-        // --- TOP LEFT: POSITION & ENERGY ---
-        this.posContainer = this.scene.add.container(20, 20).setDepth(2000);
-        // "POS" Label
-        const posLabel = this.scene.add.sprite(0, 0, 'hud', 'label_pos').setOrigin(0, 0).setScale(3);
+        // --- TOP LEFT: POSITION & SPEED BAR ---
+        this.posContainer = this.scene.add.container(0, 16).setDepth(2000);
+        // Na referencia, os números vêm antes do "POS".
+        const posLabel = this.scene.add.sprite(220, 0, 'hud', 'label_pos').setOrigin(0, 0).setScale(3);
         this.posContainer.add(posLabel);
-        // Rank digits (X/Y)
-        this.updateGraphicalText(this.posContainer, '0/10', 80, 0, 3);
+        this.updateGraphicalText(this.posContainer, '0/10', 0, 0, 3);
 
-        // Energy Bar (below POS)
-        this.energyBar = this.scene.add.container(20, 50).setDepth(2000);
-        for (let i = 0; i < 10; i++) {
-            const segment = this.scene.add.sprite(i * 14, 0, 'hud', 'bar_green').setOrigin(0, 0).setScale(3);
+        // Speed Bar (below POS), estilo Top Gear.
+        this.energyBar = this.scene.add.container(58, 62).setDepth(2000);
+        this.speedBarSegments = [];
+        for (let i = 0; i < HUDManager.SPEED_BAR_FRAMES.length; i++) {
+            const segment = this.scene.add.sprite(i * 11, 0, 'hud', 'char_quote_double').setOrigin(0, 0).setScale(3);
             this.energyBar.add(segment);
+            this.speedBarSegments.push(segment);
         }
+        this.updateSpeedBar(0);
+
+        this.carLife = this.scene.add.container(56, 92).setDepth(2000);
+        const carLife = this.scene.add.sprite(0, 0, 'hud', 'car_life').setOrigin(0, 0).setScale(3);
+        this.carLife.add(carLife);
 
         // --- TOP RIGHT: LAP & TRACK MAP ---
-        this.lapContainer = this.scene.add.container(width - 240, 20).setDepth(2000);
+        this.lapContainer = this.scene.add.container(width - 214, 16).setDepth(2000);
         const lapLabel = this.scene.add.sprite(0, 0, 'hud', 'label_lap').setOrigin(0, 0).setScale(3);
         this.lapContainer.add(lapLabel);
         this.updateGraphicalText(this.lapContainer, '1/3', 80, 0, 3);
 
         // Track Map (below LAP)
-        this.trackMap = this.scene.add.sprite(width - 110, 160, 'hud', trackMapFrame).setOrigin(1, 0).setScale(4);
+        this.trackMap = this.scene.add.sprite(width - 32, 94, 'hud', trackMapFrame).setOrigin(1, 0).setScale(4.4);
         this.trackMap.setDepth(2000);
 
         // Player Tracker Dot (Red dot as the user changed it to red)
@@ -60,13 +85,13 @@ export class HUDManager {
         this.playerTracker.setVisible(false);
 
         // --- TOP CENTER: TIME ---
-        this.timeContainer = this.scene.add.container(width / 2 - 100, 20).setDepth(2000);
-        this.updateGraphicalText(this.timeContainer, "0'00\"00", 0, 0, 3.5);
+        this.timeContainer = this.scene.add.container(width / 2 - 74, 18).setDepth(2000);
+        this.updateGraphicalText(this.timeContainer, "0'00\'00", 0, 0, 3.5);
 
         // --- BOTTOM LEFT: SPEED ---
-        this.speedContainer = this.scene.add.container(40, height - 80).setDepth(2000);
+        this.speedContainer = this.scene.add.container(18, height - 66).setDepth(2000);
         // KPH Label
-        const kphLabel = this.scene.add.sprite(110, 20, 'hud', 'label_kph').setOrigin(0, 0).setScale(3);
+        const kphLabel = this.scene.add.sprite(100, 12, 'hud', 'label_kph').setOrigin(0, 0).setScale(3);
         this.speedContainer.add(kphLabel);
         this.updateGraphicalSpeed('0');
 
@@ -96,7 +121,7 @@ export class HUDManager {
             } else if (char === "'") {
                 frame = 'dot_green';
             } else if (char === '"') {
-                frame = 'char_quote_double';
+                frame = 'dot_green';
             } else if (char === ':') {
                 frame = 'sep_time';
             }
@@ -219,6 +244,7 @@ export class HUDManager {
     updateSpeed(speed: number) {
         const kmh = Math.floor(speed / 40);
         this.updateGraphicalSpeed(kmh.toString());
+        this.updateSpeedBar(Math.min(1, speed / 12000));
     }
 
     getRaceTime() {
@@ -270,5 +296,19 @@ export class HUDManager {
         if (this.scene.sound.get('Bonus')) {
             this.scene.sound.play('Bonus', { volume: 0.5 });
         }
+    }
+
+    private updateSpeedBar(speedPercent: number) {
+        const activeSegments = Math.round(speedPercent * HUDManager.SPEED_BAR_FRAMES.length);
+
+        this.speedBarSegments.forEach((segment, index) => {
+            if (index < activeSegments) {
+                segment.setFrame(HUDManager.SPEED_BAR_FRAMES[index]);
+                segment.setAlpha(1);
+            } else {
+                segment.setFrame('char_quote_double');
+                segment.setAlpha(0.6);
+            }
+        });
     }
 }

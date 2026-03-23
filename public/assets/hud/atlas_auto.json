@@ -240,7 +240,7 @@
         "h": 5
       }
     },
-    "tiny_digit_3": {
+    "hud_speedbar_red_1": {
       "frame": {
         "x": 129,
         "y": 6,
@@ -260,7 +260,7 @@
         "h": 5
       }
     },
-    "tiny_digit_4": {
+    "hud_speedbar_green_1": {
       "frame": {
         "x": 137,
         "y": 6,
@@ -880,7 +880,7 @@
         "h": 5
       }
     },
-    "label_total": {
+    "car_life": {
       "frame": {
         "x": 43,
         "y": 45,
