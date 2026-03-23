@@ -221,6 +221,14 @@ export class HUDManager {
         this.updateGraphicalSpeed(kmh.toString());
     }
 
+    getRaceTime() {
+        return this.raceTime;
+    }
+
+    stopRaceClock() {
+        this.isRacing = false;
+    }
+
     setFinish() {
         // For Finish, we can use text or specialized sprites
         // Let's just use text for now as it's a transient state

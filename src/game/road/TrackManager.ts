@@ -9,6 +9,8 @@ export class TrackManager {
     segmentLength = 150; // Padrão clássico do OutRun
     public currentTrack: TrackData;
     private macroPoints: { x: number, z: number }[] = [];
+    private startLineStartZ = 0;
+    private startLineEndZ = 0;
 
     constructor(trackData: TrackData) {
         this.currentTrack = trackData;
@@ -72,6 +74,13 @@ export class TrackManager {
         return this.macroPoints;
     }
 
+    public getStartLineRange() {
+        return {
+            startZ: this.startLineStartZ,
+            endZ: this.startLineEndZ
+        };
+    }
+
     private buildTrack(data: TrackData) {
         let z = 0;
         let y = 0;
@@ -118,6 +127,10 @@ export class TrackManager {
                 // Movemos para o meio da primeira reta (índice 50-57) para garantir que esteja em reta
                 if (segmentIndex >= 40 && segmentIndex < 48) {
                     segment.isStartLine = true;
+                    if (this.startLineStartZ === 0) {
+                        this.startLineStartZ = segment.p1.world.z;
+                    }
+                    this.startLineEndZ = segment.p2.world.z;
                 }
 
                 segment.p1.world.y = y;

@@ -1,5 +1,6 @@
 import { EnemyVehicle } from './EnemyVehicle';
 import { TrackManager } from '../road/TrackManager';
+import { ENEMY_DRIVER_NAMES, RaceParticipant } from '../league/league';
 
 export class EnemyManager {
     private static readonly LANE_CENTERS = [-0.54, -0.18, 0.18, 0.54];
@@ -41,9 +42,11 @@ export class EnemyManager {
                 const accelRate = 1320 + ((EnemyManager.GRID_ROWS - row) * 45) + (col === 1 ? 50 : 0);
                 const launchDelay = (row * 0.12) + (col * 0.03);
                 const color = colors[enemyId % colors.length];
+                const name = ENEMY_DRIVER_NAMES[enemyId] || `RIVAL ${enemyId + 1}`;
 
                 this.enemies.push({
                     id: enemyId,
+                    name,
                     z: finalZ,
                     x: finalX,
                     speed: 0,
@@ -59,6 +62,7 @@ export class EnemyManager {
                     laps: 0,
                     lastZ: finalZ,
                     finished: false,
+                    finishTime: null,
                     percent: 0
                 });
 
@@ -67,7 +71,15 @@ export class EnemyManager {
         }
     }
 
-    update(dt: number, isRacing: boolean, trackManager: TrackManager, playerZ: number, playerX: number, totalLaps: number) {
+    update(
+        dt: number,
+        isRacing: boolean,
+        trackManager: TrackManager,
+        playerZ: number,
+        playerX: number,
+        totalLaps: number,
+        playerActive: boolean
+    ) {
         const trackLength = trackManager.trackLength;
 
         if (!isRacing) {
@@ -123,13 +135,14 @@ export class EnemyManager {
                 enemy.laps++;
                 if (enemy.laps >= totalLaps) {
                     enemy.finished = true;
+                    enemy.finishTime ??= enemy.percent;
                 }
             }
             enemy.lastZ = enemy.z;
 
             // --- INTELIGÊNCIA DE DESVIO/ULTRAPASSAGEM ---
             const inLaunchPhase = enemy.percent < EnemyManager.LAUNCH_SETTLE_TIME;
-            const laneDecision = this.chooseLane(enemy, playerZ, playerX, trackLength);
+            const laneDecision = this.chooseLane(enemy, playerZ, playerX, trackLength, playerActive);
             enemy.targetX = inLaunchPhase ? enemy.preferredLane : laneDecision.targetLane;
 
             if (laneDecision.aheadDistance < EnemyManager.EMERGENCY_BRAKE_DISTANCE) {
@@ -164,7 +177,7 @@ export class EnemyManager {
         });
     }
 
-    private chooseLane(subject: EnemyVehicle, playerZ: number, playerX: number, trackLength: number) {
+    private chooseLane(subject: EnemyVehicle, playerZ: number, playerX: number, trackLength: number, playerActive: boolean) {
         const currentLane = this.getNearestLane(subject.targetX);
         const homeLane = subject.preferredLane;
         const lookAheadDistance = Phaser.Math.Clamp(
@@ -172,13 +185,13 @@ export class EnemyManager {
             EnemyManager.SAFE_AHEAD_DISTANCE,
             1500
         );
-        const currentTraffic = this.getLaneTraffic(subject, currentLane, playerZ, playerX, trackLength);
+        const currentTraffic = this.getLaneTraffic(subject, currentLane, playerZ, playerX, trackLength, playerActive);
         const currentAheadDistance = currentTraffic.aheadDistance ?? 9999;
         const currentAheadSpeed = currentTraffic.aheadSpeed ?? subject.targetSpeed;
 
         const isBlockedAhead = currentAheadDistance < EnemyManager.OVERTAKE_TRIGGER_DISTANCE;
         if (!isBlockedAhead) {
-            const homeTraffic = this.getLaneTraffic(subject, homeLane, playerZ, playerX, trackLength);
+            const homeTraffic = this.getLaneTraffic(subject, homeLane, playerZ, playerX, trackLength, playerActive);
             const homeAheadDistance = homeTraffic.aheadDistance ?? 9999;
             const homeBehindDistance = homeTraffic.behindDistance ?? 9999;
             const canReturnHome =
@@ -200,7 +213,7 @@ export class EnemyManager {
         for (const lane of EnemyManager.LANE_CENTERS) {
             if (lane === currentLane) continue;
 
-            const traffic = this.getLaneTraffic(subject, lane, playerZ, playerX, trackLength);
+            const traffic = this.getLaneTraffic(subject, lane, playerZ, playerX, trackLength, playerActive);
             const aheadDistance = traffic.aheadDistance ?? 9999;
             const behindDistance = traffic.behindDistance ?? 9999;
             const hasSafeRearGap = behindDistance > EnemyManager.SAFE_REAR_DISTANCE;
@@ -225,7 +238,14 @@ export class EnemyManager {
         };
     }
 
-    private getLaneTraffic(subject: EnemyVehicle, lane: number, playerZ: number, playerX: number, trackLength: number) {
+    private getLaneTraffic(
+        subject: EnemyVehicle,
+        lane: number,
+        playerZ: number,
+        playerX: number,
+        trackLength: number,
+        playerActive: boolean
+    ) {
         let aheadDistance: number | null = null;
         let aheadSpeed: number | null = null;
         let behindDistance: number | null = null;
@@ -246,7 +266,7 @@ export class EnemyManager {
             }
         });
 
-        if (Math.abs(playerX - lane) <= EnemyManager.LANE_CAPTURE_RANGE) {
+        if (playerActive && Math.abs(playerX - lane) <= EnemyManager.LANE_CAPTURE_RANGE) {
             const playerAheadDistance = this.forwardDistance(subject.z, playerZ, trackLength);
             if (playerAheadDistance > 0 && (aheadDistance === null || playerAheadDistance < aheadDistance)) {
                 aheadDistance = playerAheadDistance;
@@ -283,14 +303,30 @@ export class EnemyManager {
         return dist;
     }
 
-    getParticipants(playerDist: number, trackLen: number) {
-        const participants = [
-            { name: 'PLAYER', dist: playerDist, isPlayer: true },
-            ...this.enemies.map(e => ({ name: `PLAYER ${e.id + 1}`, dist: e.laps * trackLen + e.z, isPlayer: false }))
+    getParticipants(
+        playerName: string,
+        playerDist: number,
+        playerFinished: boolean,
+        playerFinishTime: number | null,
+        trackLen: number
+    ): RaceParticipant[] {
+        return [
+            {
+                id: 'player',
+                name: playerName,
+                dist: playerDist,
+                isPlayer: true,
+                finished: playerFinished,
+                finishTime: playerFinishTime
+            },
+            ...this.enemies.map(enemy => ({
+                id: `enemy:${enemy.name}`,
+                name: enemy.name,
+                dist: enemy.finished ? trackLen * 999 : enemy.laps * trackLen + enemy.z,
+                isPlayer: false,
+                finished: enemy.finished,
+                finishTime: enemy.finishTime
+            }))
         ];
-
-        // Ordena por distância (descendente)
-        participants.sort((a, b) => b.dist - a.dist);
-        return participants;
     }
 }

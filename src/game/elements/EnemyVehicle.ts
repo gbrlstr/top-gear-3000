@@ -1,5 +1,6 @@
 export interface EnemyVehicle {
     id: number;
+    name: string;
     z: number;          // Posição na pista (0 até trackLength)
     x: number;          // Posição lateral (-0.8 a 0.8)
     speed: number;      // Velocidade do NPC
@@ -11,6 +12,7 @@ export interface EnemyVehicle {
     laps: number;       // Voltas completadas
     lastZ: number;      // Última posição Z (para detecção de volta)
     finished: boolean;  // Se já cruzou a linha de chegada final
+    finishTime: number | null;
     targetSpeed: number; // Velocidade final desejada
     accelRate: number;  // Aceleração base do NPC
     preferredLane: number; // Faixa preferida para estabilizar o pelotão
