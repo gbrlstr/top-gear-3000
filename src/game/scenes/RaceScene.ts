@@ -28,7 +28,6 @@ export class RaceScene extends Scene {
 
     private currentLap: number = 1;
     private totalLaps: number = 3;
-    private lastPosition: number = 0;
     private isRacing: boolean = false;
 
 
@@ -82,6 +81,7 @@ export class RaceScene extends Scene {
         const dt = delta / 1000;
 
         if (!this.isRacing) {
+            const playerWorldZ = this.getPlayerWorldZ();
             const countdownFinished = this.hudManager.updateCountdown(delta / 300);
 
             if (countdownFinished) {
@@ -92,6 +92,7 @@ export class RaceScene extends Scene {
                 dt,
                 this.isRacing,
                 this.trackManager,
+                playerWorldZ,
                 this.playerManager.x,
                 this.totalLaps
             );
@@ -112,19 +113,11 @@ export class RaceScene extends Scene {
         }
 
         this.playerManager.handleInput(dt, this.trackManager);
-
-        const currentPos = this.trackManager.position;
-
-        // DETEÇÃO DE VOLTA: 
-        // Se a posição "pulou" do fim para o início
-        if (currentPos < this.lastPosition && this.playerManager.speed > 0) {
-            this.onLapComplete();
-        }
+        const previousPosition = this.trackManager.position;
+        const trackLength = this.trackManager.trackLength;
 
         // Atualiza a posição na pista
         this.trackManager.update(this.playerManager.speed * dt);
-
-        this.lastPosition = currentPos;
 
         this.hudManager.updateSpeed(this.playerManager.speed);
 
@@ -135,10 +128,13 @@ export class RaceScene extends Scene {
             this.starfield.update();
         }
 
+        const playerWorldZ = this.getPlayerWorldZ();
+
         this.enemyManager.update(
             dt,
             this.isRacing,
             this.trackManager,
+            playerWorldZ,
             this.playerManager.x,
             this.totalLaps
         );
@@ -147,8 +143,20 @@ export class RaceScene extends Scene {
             this.playerManager,
             this.trackManager,
             this.enemyManager.enemies,
-            this
+            this,
+            playerWorldZ
         );
+
+        // Conta volta apenas quando o player realmente cruza do fim para o começo da pista.
+        const currentPosition = this.trackManager.position;
+        const crossedFinishLine =
+            this.playerManager.speed > 0 &&
+            previousPosition > trackLength * 0.8 &&
+            currentPosition < trackLength * 0.2;
+
+        if (crossedFinishLine) {
+            this.onLapComplete();
+        }
 
         this.updateRankings();
 
@@ -221,6 +229,13 @@ export class RaceScene extends Scene {
         } else {
             this.hudManager.onLapComplete(this.currentLap, this.totalLaps);
         }
+    }
+
+    private getPlayerWorldZ() {
+        const trackLength = this.trackManager.trackLength;
+        const playerOffsetZ = this.camHeight * this.camDepth;
+        const worldZ = this.trackManager.position + playerOffsetZ;
+        return ((worldZ % trackLength) + trackLength) % trackLength;
     }
 
 }

@@ -55,9 +55,8 @@ export class EnemyManager {
         }
     }
 
-    update(dt: number, isRacing: boolean, trackManager: TrackManager, playerX: number, totalLaps: number) {
+    update(dt: number, isRacing: boolean, trackManager: TrackManager, playerZ: number, playerX: number, totalLaps: number) {
         const trackLength = trackManager.trackLength;
-        const playerZ = trackManager.position;
 
         if (!isRacing) {
             // Garante que os inimigos fiquem retos e parados durante o countdown
