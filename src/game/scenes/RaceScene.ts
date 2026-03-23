@@ -35,6 +35,7 @@ export class RaceScene extends Scene {
     private playerFinished: boolean = false;
     private playerFinishTime: number | null = null;
     private resultsQueued: boolean = false;
+    private playerLapArmed: boolean = false;
     private finishCameraLocked: boolean = false;
     private finishCameraPosition: number = 0;
     private finishedPlayerCar: EnemyVehicle | null = null;
@@ -56,6 +57,7 @@ export class RaceScene extends Scene {
         this.playerFinished = false;
         this.playerFinishTime = null;
         this.resultsQueued = false;
+        this.playerLapArmed = false;
         this.finishCameraLocked = false;
         this.finishCameraPosition = 0;
         this.finishedPlayerCar = null;
@@ -248,6 +250,11 @@ export class RaceScene extends Scene {
     }
 
     private onLapComplete() {
+        if (!this.playerLapArmed) {
+            this.playerLapArmed = true;
+            return;
+        }
+
         if (this.currentLap >= this.totalLaps) {
             this.finishPlayerRace();
             return;

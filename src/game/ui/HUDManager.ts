@@ -250,7 +250,7 @@ export class HUDManager {
     onLapComplete(currentLap: number, totalLaps: number) {
         this.currentLap = currentLap;
         this.totalLaps = totalLaps;
-        this.updateGraphicalText(this.lapContainer, `${this.currentLap}/${this.totalLaps}`, 80, 0, 2);
+        this.updateGraphicalText(this.lapContainer, `${this.currentLap}/${this.totalLaps}`, 80, 0, 3);
 
         const lapLabel = this.currentLap === this.totalLaps ? "FINAL LAP!" : "LAP COMPLETED";
         const msg = this.scene.add.text(this.scene.scale.width / 2, this.scene.scale.height / 2, lapLabel, {
