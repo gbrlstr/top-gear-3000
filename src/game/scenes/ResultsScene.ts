@@ -6,13 +6,15 @@ export class ResultsScene extends Scene {
     private starfield!: Starfield;
     private rankings: any[] = [];
     private points = [20, 14, 12, 10, 8, 6, 5, 4, 3, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0];
+    private trackId: number;
 
     constructor() {
         super('ResultsScene');
     }
 
-    init(data: { rankings: any[] }) {
+    init(data: { rankings: any[], trackId?: number }) {
         this.rankings = data.rankings || [];
+        this.trackId = data.trackId || 1;
     }
 
     create() {
@@ -73,13 +75,24 @@ export class ResultsScene extends Scene {
         }
 
         // Instructions at the bottom
-        this.add.text(width / 2, height - 40, 'PRESS ANY KEY TO RETURN', {
+        this.add.text(width / 2, height - 60, 'PRESS [N] FOR NEXT TRACK', {
+            fontFamily: '"Press Start 2P"',
+            fontSize: '16px',
+            color: '#00ffff'
+        }).setOrigin(0.5);
+
+        this.add.text(width / 2, height - 30, 'PRESS [ESC] FOR MAIN MENU', {
             fontFamily: '"Press Start 2P"',
             fontSize: '16px',
             color: '#ffffff'
         }).setOrigin(0.5).setAlpha(0.7);
 
-        this.input.keyboard?.once('keydown', () => {
+        this.input.keyboard?.on('keydown-N', () => {
+            const nextId = (this.trackId % 34) + 1;
+            this.scene.start('RaceScene', { trackId: nextId });
+        });
+
+        this.input.keyboard?.on('keydown-ESC', () => {
             this.scene.start('MainMenu');
         });
 

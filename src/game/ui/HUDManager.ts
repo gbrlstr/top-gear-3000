@@ -12,6 +12,8 @@ export class HUDManager {
     private trackMap!: Phaser.GameObjects.Sprite;
     private playerTracker!: Phaser.GameObjects.Sprite;
     private trackMapOffset: number = 0;
+    private macroPoints: { x: number, z: number }[] = [];
+    private mapBounds = { minX: 0, maxX: 0, minZ: 0, maxZ: 0, width: 0, height: 0 };
 
     public countdownText!: Phaser.GameObjects.Text;
 
@@ -155,36 +157,53 @@ export class HUDManager {
             this.raceTime += dt;
             this.updateRaceTime();
 
-            // Update Tracker Dot Position
-            // Approximate position on the 27x37 (scaled 4x) minimap
-            // For track_01 (vertical loop), we can move it along the perimeter
-            // Perimeter = (27+37)*2 = 128 units.
-            // Visual bounds of the minimap sprite (scaled)
-            const mapW = this.trackMap.width * 4;
-            const mapH = this.trackMap.height * 4;
-            const margin = 10; // Pixels to stay inside the border
-
-            // Absolute screen coordinates for the path
-            const left = this.trackMap.x - mapW + margin;
-            const right = this.trackMap.x - margin;
-            const top = this.trackMap.y + margin;
-            const bottom = this.trackMap.y + mapH - margin;
-
+            // Sincronização direta com a geometria da pista
             let p = (playerProgress + this.trackMapOffset) % 1;
             this.playerTracker.setVisible(true);
-            if (p < 0.25) { // Phase 1: Left up
-                this.playerTracker.x = left;
-                this.playerTracker.y = bottom - (p / 0.25) * (bottom - top);
-            } else if (p < 0.5) { // Phase 2: Top right
-                this.playerTracker.x = left + ((p - 0.25) / 0.25) * (right - left);
-                this.playerTracker.y = top;
-            } else if (p < 0.75) { // Phase 3: Right down
-                this.playerTracker.x = right;
-                this.playerTracker.y = top + ((p - 0.5) / 0.25) * (bottom - top);
-            } else { // Phase 4: Bottom left
-                this.playerTracker.x = right - ((p - 0.75) / 0.25) * (right - left);
-                this.playerTracker.y = bottom;
+
+            if (this.macroPoints.length > 0) {
+                const mapW = this.trackMap.width * 4;
+                const mapH = this.trackMap.height * 4;
+                const margin = 5;
+
+                // Escala para caber no sprite do mapa
+                const scale = Math.min(
+                    (mapW - margin * 2) / this.mapBounds.width,
+                    (mapH - margin * 2) / this.mapBounds.height
+                );
+
+                // Centralização no sprite (ajuste fino conforme necessário)
+                // O sprite trackMap tem origin (1, 0) - Top Right
+                const centerX = this.trackMap.x - mapW / 2;
+                const centerY = this.trackMap.y + mapH / 2;
+
+                const offsetX = centerX - ((this.mapBounds.minX + this.mapBounds.maxX) / 2) * scale;
+                const offsetY = centerY - ((this.mapBounds.minZ + this.mapBounds.maxZ) / 2) * scale;
+
+                const pointIdx = Math.floor(p * this.macroPoints.length) % this.macroPoints.length;
+                const pPos = this.macroPoints[pointIdx];
+
+                this.playerTracker.setPosition(
+                    pPos.x * scale + offsetX,
+                    pPos.z * scale + offsetY
+                );
             }
+        }
+    }
+
+    setTrackPath(points: { x: number, z: number }[]) {
+        this.macroPoints = points;
+        if (points.length > 0) {
+            let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+            for (const pt of points) {
+                minX = Math.min(minX, pt.x); maxX = Math.max(maxX, pt.x);
+                minZ = Math.min(minZ, pt.z); maxZ = Math.max(maxZ, pt.z);
+            }
+            this.mapBounds = {
+                minX, maxX, minZ, maxZ,
+                width: Math.max(1, maxX - minX),
+                height: Math.max(1, maxZ - minZ)
+            };
         }
     }
 

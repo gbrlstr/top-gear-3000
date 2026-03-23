@@ -8,17 +8,23 @@ export const track1: TrackData = {
         dark: { road: 0x404040, grass: 0x000000, rumble: 0xbb0000, startLine: 0xffffff }
     },
     segments: [
-        { length: 150, curve: 0, hill: 0 },   // Start Straight
-        { length: 100, curve: 0, hill: 20 },  // First Hill
-        { length: 100, curve: 1, hill: 0 },   // Gentle Right turn
-        { length: 100, curve: 3, hill: -20 }, // Harder Right down hill
-        { length: 200, curve: 0, hill: 0 },   // Long Straight
-        { length: 150, curve: -2, hill: 10 }, // Left turn up hill
-        { length: 100, curve: -4, hill: 0 },  // Sharp Left
-        { length: 150, curve: 0, hill: -10 }, // Straight down
-        { length: 200, curve: 4, hill: 0 },   // Final Hard Right to close loop
-        { length: 100, curve: 0, hill: 0 }    // Final Straight
+        // Reta Inferior (Largada - Estreita)
+        { length: 100, curve: 0, hill: 0 },
+        // Curva 1 (Canto Inferior Direito)
+        { length: 30, curve: 8, hill: 0 },
+        // Reta Lateral Direita (Longa - Sobe)
+        { length: 50, curve: 0, hill: 0 },
+        // Curva 2 (Canto Superior Direito)
+        { length: 30, curve: 8, hill: 0 },
+        // Reta Superior (Topo - Estreita)
+        { length: 100, curve: 0, hill: 0 },
+        // Curva 3 (Canto Superior Esquerdo)
+        { length: 30, curve: 8, hill: 0 },
+        // Reta Lateral Esquerda (Longa - Desce)
+        { length: 50, curve: 0, hill: 0 },
+        // Curva 4 (Canto Inferior Esquerdo)
+        { length: 30, curve: 8, hill: 0 }
     ],
     trackMapFrame: 'track_01',
-    trackMapOffset: 0.15
+    trackMapOffset: 0
 };

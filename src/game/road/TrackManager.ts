@@ -8,10 +8,43 @@ export class TrackManager {
     position = 0;
     segmentLength = 150; // Padrão clássico do OutRun
     public currentTrack: TrackData;
+    private macroPoints: { x: number, z: number }[] = [];
 
     constructor(trackData: TrackData) {
         this.currentTrack = trackData;
         this.buildTrack(trackData);
+        this.generateMacroGeometry(trackData);
+    }
+
+    private generateMacroGeometry(track: TrackData) {
+        this.macroPoints = [];
+        let curAngle = 0;
+        let curX = 0;
+        let curZ = 0;
+
+        const totalCurvePower = track.segments.reduce((acc, s) => acc + Math.abs(s.curve), 0);
+        if (totalCurvePower === 0) return; // Prevent division by zero
+
+        const turnFactor = (Math.PI * 2) / totalCurvePower;
+
+        track.segments.forEach(seg => {
+            const iterations = Math.max(1, Math.floor(seg.length / 10));
+            const stepLen = seg.length / iterations;
+            const stepTurn = (seg.curve * turnFactor * stepLen) / seg.length;
+
+            for (let i = 0; i < iterations; i++) {
+                curAngle += stepTurn;
+                // INVERSÃO: Para ficar em pé, X usa SENO e Z usa COSSENO
+                // E multiplicamos Z por -1 para que o "norte" seja para cima na tela
+                curX += Math.sin(curAngle) * stepLen;
+                curZ -= Math.cos(curAngle) * stepLen;
+                this.macroPoints.push({ x: curX, z: curZ });
+            }
+        });
+    }
+
+    public getMacroPoints(): { x: number, z: number }[] {
+        return this.macroPoints;
     }
 
     private buildTrack(data: TrackData) {
@@ -57,8 +90,8 @@ export class TrackManager {
                 }
 
                 // MARCAÇÃO DA LINHA DE CHEGADA:
-                // Vamos marcar os primeiros 15 segmentos (1500 unidades de Z se o length for 100)
-                if (segmentIndex >= 0 && segmentIndex < 8) {
+                // Movemos para o meio da primeira reta (índice 50-57) para garantir que esteja em reta
+                if (segmentIndex >= 40 && segmentIndex < 48) {
                     segment.isStartLine = true;
                 }
 

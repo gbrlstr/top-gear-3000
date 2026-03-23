@@ -3,19 +3,22 @@ import { EventBus } from '../EventBus';
 import { Starfield } from '../Starfield';
 import { TrackManager } from '../road/TrackManager';
 import { RoadRenderer } from '../road/RoadRenderer';
-import { track1 } from '../tracks/track1';
+import { TRACK_COLLECTION } from '../tracks/trackRegistry';
 import { HUDManager } from '../ui/HUDManager';
 import { EnemyManager } from '../elements/EnemyManager';
 import { PlayerManager } from '../elements/PlayerManager';
 import { CollisionManager } from '../elements/CollisionManager';
+import { TrackDebugView } from '../utils/TrackDebugView';
 
 export class RaceScene extends Scene {
+    private trackId: number = 1;
     private trackManager!: TrackManager;
     private roadGraphics!: Phaser.GameObjects.Graphics;
     private starfield!: Starfield;
     private hudManager!: HUDManager;
     private enemyManager!: EnemyManager;
     private playerManager!: PlayerManager;
+    private debugView!: TrackDebugView;
 
     private roadWidth = 2000;
     private drawDistance = 120; // Reduzido para evitar sobreposição excessiva e jitter
@@ -30,14 +33,18 @@ export class RaceScene extends Scene {
 
 
 
+    init(data: { trackId?: number }) {
+        this.trackId = data.trackId || 1;
+    }
+
     constructor() {
         super('RaceScene');
     }
 
     create() {
         // Inicializa o gerenciador de pista
-        const selectedTrack = track1;
-        this.trackManager = new TrackManager(selectedTrack);
+        const selectedTrack = TRACK_COLLECTION.find(t => t.id === this.trackId);
+        this.trackManager = new TrackManager(selectedTrack!);
 
         // Fundo (Estrelas)
         this.starfield = new Starfield(this);
@@ -60,9 +67,13 @@ export class RaceScene extends Scene {
         // Inicializa o Gerenciador de HUD e Inimigos
         this.hudManager = new HUDManager(this);
         this.hudManager.create(
-            this.trackManager.currentTrack.trackMapFrame || 'track_01',
-            this.trackManager.currentTrack.trackMapOffset || 0
+            this.trackManager.currentTrack.trackMapFrame,
+            this.trackManager.currentTrack.trackMapOffset
         );
+        this.hudManager.setTrackPath(this.trackManager.getMacroPoints());
+
+        // Debug Track Map
+        this.debugView = new TrackDebugView(this);
 
         EventBus.emit('current-scene-ready', this);
     }
@@ -71,7 +82,7 @@ export class RaceScene extends Scene {
         const dt = delta / 1000;
 
         if (!this.isRacing) {
-            const countdownFinished = this.hudManager.updateCountdown(dt);
+            const countdownFinished = this.hudManager.updateCountdown(delta / 300);
 
             if (countdownFinished) {
                 this.isRacing = true;
@@ -86,6 +97,14 @@ export class RaceScene extends Scene {
             );
 
             this.playerManager.updateVisuals(_time, this.trackManager, this.camHeight);
+
+            // TRACKERS UPDATE
+            const playerProgress = this.trackManager.position / this.trackManager.trackLength;
+            this.hudManager.update(dt, playerProgress);
+            if (this.debugView) {
+                this.debugView.update(this.trackManager, this.trackManager.position);
+            }
+
             this.renderRoad();
             if (this.starfield) this.starfield.update();
             this.updateRankings();
@@ -136,6 +155,10 @@ export class RaceScene extends Scene {
         this.renderRoad();
         this.playerManager.updateVisuals(_time, this.trackManager, this.camHeight);
 
+        // Update Debug View
+        if (this.debugView) {
+            this.debugView.update(this.trackManager, this.trackManager.position);
+        }
     }
 
     private updateRankings() {
@@ -193,7 +216,7 @@ export class RaceScene extends Scene {
             const finalRankings = this.enemyManager.getParticipants(playerDist, trackLen);
 
             this.time.delayedCall(2000, () => {
-                this.scene.start('ResultsScene', { rankings: finalRankings });
+                this.scene.start('ResultsScene', { rankings: finalRankings, trackId: this.trackId });
             });
         } else {
             this.hudManager.onLapComplete(this.currentLap, this.totalLaps);
