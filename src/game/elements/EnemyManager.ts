@@ -1,4 +1,5 @@
 import { EnemyVehicle } from './EnemyVehicle';
+import { TrackManager } from '../road/TrackManager';
 
 export class EnemyManager {
     public enemies: EnemyVehicle[] = [];
@@ -54,7 +55,10 @@ export class EnemyManager {
         }
     }
 
-    update(dt: number, isRacing: boolean, trackLength: number, playerZ: number, playerX: number, totalLaps: number) {
+    update(dt: number, isRacing: boolean, trackManager: TrackManager, playerX: number, totalLaps: number) {
+        const trackLength = trackManager.trackLength;
+        const playerZ = trackManager.position;
+
         if (!isRacing) {
             // Garante que os inimigos fiquem retos e parados durante o countdown
             this.enemies.forEach(enemy => {
@@ -67,13 +71,28 @@ export class EnemyManager {
         }
 
         this.enemies.forEach(enemy => {
+            // Pega o segmento atual do inimigo para saber a curva
+            const segmentIndex = Math.floor(enemy.z / trackManager.segmentLength) % trackManager.segments.length;
+            const segment = trackManager.segments[segmentIndex];
+            const curve = segment ? segment.curve : 0;
+
             if (enemy.finished) {
                 enemy.speed = Math.max(0, enemy.speed - dt * 2000);
             } else {
-                // Aceleração progressiva até a velocidade alvo
-                if (enemy.speed < enemy.targetSpeed) {
+                // REDUÇÃO DE VELOCIDADE EM CURVAS:
+                // Se a curva for acentuada (abs > 2), reduz a velocidade alvo significativamente
+                let dynamicTargetSpeed = enemy.targetSpeed;
+                if (Math.abs(curve) > 2) {
+                    const curveFactor = Math.abs(curve) / 5; // Escala a penalidade
+                    dynamicTargetSpeed = enemy.targetSpeed * (1 - (curveFactor * 0.4)); // Até 40% de perda
+                }
+
+                if (enemy.speed < dynamicTargetSpeed) {
                     enemy.speed += 2000 * dt;
-                    if (enemy.speed > enemy.targetSpeed) enemy.speed = enemy.targetSpeed;
+                    if (enemy.speed > dynamicTargetSpeed) enemy.speed = dynamicTargetSpeed;
+                } else if (enemy.speed > dynamicTargetSpeed) {
+                    // Perda de velocidade forçada em curvas (frenagem)
+                    enemy.speed -= 3000 * dt;
                 }
             }
 
@@ -113,9 +132,16 @@ export class EnemyManager {
             // Clamp para não sair da pista
             enemy.x = Phaser.Math.Clamp(enemy.x, -0.9, 0.9);
 
-            // --- ATUALIZAÇÃO VISUAL (FIXA: SEM CURVA PARA NPCs) ---
-            enemy.frame = '00';
-            enemy.flipX = false;
+            // --- ATUALIZAÇÃO VISUAL BASEADA EM CURVA E STEERING ---
+            let steerFrame = '00';
+            const totalSteer = enemy.steering + (curve * 0.1); // Combina o desvio do carro com a curva da pista
+            
+            if (Math.abs(totalSteer) > 0.6) steerFrame = '03';
+            else if (Math.abs(totalSteer) > 0.3) steerFrame = '02';
+            else if (Math.abs(totalSteer) > 0.1) steerFrame = '01';
+
+            enemy.frame = steerFrame;
+            enemy.flipX = totalSteer < 0;
         });
     }
 

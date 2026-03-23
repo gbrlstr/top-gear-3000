@@ -59,6 +59,7 @@ export class RoadRenderer {
                         }
                     }
                 }
+
             } else {
                 // Desenha a faixa pontilhada no centro para segmentos normais
                 if (segment.colors.lane) {
@@ -77,13 +78,18 @@ export class RoadRenderer {
             // --- CAMADA 4: CARROS INIMIGOS (NPCs) ---
             // Verifica se há um inimigo neste trecho Z da pista
             for (const enemy of enemies) {
-                // Corrigido para verificar se o inimigo está entre p1.z e p2.z
                 if (enemy.z >= segment.p1.world.z && enemy.z < segment.p2.world.z) {
-                    const carX = p1.x + (p1.w * enemy.x);
-                    const carScale = p1.scale! * 4000;
+                    // INTERPOLAÇÃO PARA MOVIMENTO SUAVE
+                    const segmentZ = segment.p2.world.z - segment.p1.world.z;
+                    const percent = (enemy.z - segment.p1.world.z) / segmentZ;
+
+                    const carY = p1.y + (p2.y - p1.y) * percent;
+                    const carX = p1.x + (p2.x - p1.x) * percent + (p1.w + (p2.w - p1.w) * percent) * enemy.x;
+                    const carScale = (p1.scale! + (p2.scale! - p1.scale!) * percent) * 4000;
+                    
                     const imageKey = `rear_${enemy.color}_c${enemy.frame}`;
-                    // Passa o flipX do inimigo para a função de renderização
                     const finalFlipX = enemy.frame === '00' ? false : enemy.flipX;
+
                     this.renderAtPosition(
                         spriteGroup,
                         allChildren,
@@ -91,7 +97,7 @@ export class RoadRenderer {
                         'vehicles',
                         imageKey,
                         carX,
-                        p1.y,
+                        carY,
                         carScale,
                         finalFlipX
                     );

@@ -84,7 +84,10 @@ export class TrackManager {
         const startLine = Math.floor(this.position / this.segmentLength);
         const result: RoadSegment[] = [];
 
-        for (let n = 0; n < drawDistance; n++) {
+        // LIMITA drawDistance ao número total de segmentos disponíveis para evitar jitter de projeção
+        const actualDrawDistance = Math.min(drawDistance, this.segments.length);
+
+        for (let n = 0; n < actualDrawDistance; n++) {
             const segment = this.segments[(startLine + n) % this.segments.length];
             result.push(segment);
         }

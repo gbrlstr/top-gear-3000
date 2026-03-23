@@ -7,6 +7,7 @@ import { track1 } from '../tracks/track1';
 import { HUDManager } from '../ui/HUDManager';
 import { EnemyManager } from '../elements/EnemyManager';
 import { PlayerManager } from '../elements/PlayerManager';
+import { CollisionManager } from '../elements/CollisionManager';
 
 export class RaceScene extends Scene {
     private trackManager!: TrackManager;
@@ -17,7 +18,7 @@ export class RaceScene extends Scene {
     private playerManager!: PlayerManager;
 
     private roadWidth = 2000;
-    private drawDistance = 500; // Aumente para compensar os segmentos curtos
+    private drawDistance = 120; // Reduzido para evitar sobreposição excessiva e jitter
     private camHeight = 1000;   // Baixar a câmera aumenta a sensação de velocidade
     private camDepth = 0.8;     // Profundidade menor achata a pista e a faz passar mais rápido
     private spriteGroup!: Phaser.GameObjects.Group;
@@ -52,6 +53,9 @@ export class RaceScene extends Scene {
         this.playerManager = new PlayerManager(this);
         this.playerManager.create();
 
+        // Inimigos
+        this.enemyManager = new EnemyManager();
+        this.enemyManager.createEnemies();
 
         // Inicializa o Gerenciador de HUD e Inimigos
         this.hudManager = new HUDManager(this);
@@ -59,9 +63,6 @@ export class RaceScene extends Scene {
             this.trackManager.currentTrack.trackMapFrame || 'track_01',
             this.trackManager.currentTrack.trackMapOffset || 0
         );
-
-        this.enemyManager = new EnemyManager();
-        this.enemyManager.createEnemies();
 
         EventBus.emit('current-scene-ready', this);
     }
@@ -79,8 +80,7 @@ export class RaceScene extends Scene {
             this.enemyManager.update(
                 dt,
                 this.isRacing,
-                this.trackManager.trackLength,
-                this.trackManager.position,
+                this.trackManager,
                 this.playerManager.x,
                 this.totalLaps
             );
@@ -105,9 +105,6 @@ export class RaceScene extends Scene {
         // Atualiza a posição na pista
         this.trackManager.update(this.playerManager.speed * dt);
 
-        this.renderRoad();
-        this.playerManager.updateVisuals(_time, this.trackManager, this.camHeight);
-
         this.lastPosition = currentPos;
 
         this.hudManager.updateSpeed(this.playerManager.speed);
@@ -122,13 +119,23 @@ export class RaceScene extends Scene {
         this.enemyManager.update(
             dt,
             this.isRacing,
-            this.trackManager.trackLength,
-            this.trackManager.position,
+            this.trackManager,
             this.playerManager.x,
             this.totalLaps
         );
 
+        CollisionManager.handleCollisions(
+            this.playerManager,
+            this.trackManager,
+            this.enemyManager.enemies,
+            this
+        );
+
         this.updateRankings();
+
+        this.renderRoad();
+        this.playerManager.updateVisuals(_time, this.trackManager, this.camHeight);
+
     }
 
     private updateRankings() {
