@@ -5,13 +5,14 @@ import { TrackManager } from '../road/TrackManager';
 import { RoadRenderer } from '../road/RoadRenderer';
 import { track1 } from '../tracks/track1';
 import { EnemyVehicle } from '../elements/EnemyVehicle';
+import { HUDManager } from '../ui/HUDManager';
 
 export class RaceScene extends Scene {
     private playerVehicle!: Phaser.GameObjects.Sprite;
-    private speedText!: Phaser.GameObjects.Text;
     private trackManager!: TrackManager;
     private roadGraphics!: Phaser.GameObjects.Graphics;
     private starfield!: Starfield;
+    private hudManager!: HUDManager;
 
     // Player variables
     private playerX = 0.2; // Ajuste o X do player aqui (-1.0 a 1.0)
@@ -33,12 +34,7 @@ export class RaceScene extends Scene {
     private currentLap: number = 1;
     private totalLaps: number = 3;
     private lastPosition: number = 0;
-    private lapText!: Phaser.GameObjects.Text;
-    private rankText!: Phaser.GameObjects.Text;
-    private countdownText!: Phaser.GameObjects.Text;
     private enemies: EnemyVehicle[] = [];
-
-    private countdownTimer: number = 10;
     private isRacing: boolean = false;
 
 
@@ -72,32 +68,9 @@ export class RaceScene extends Scene {
             this.cursors = this.input.keyboard.createCursorKeys();
         }
 
-        // HUD de Velocidade
-        this.speedText = this.add.text(this.scale.width - 200, this.scale.height - 50, '0 KPH', {
-            fontFamily: '"Press Start 2P"',
-            fontSize: '23px',
-            color: '#ffff00'
-        }).setDepth(2000);
-
-        this.lapText = this.add.text(20, 20, `LAP ${this.currentLap}/${this.totalLaps}`, {
-            fontFamily: '"Press Start 2P"',
-            fontSize: '24px',
-            color: '#ffffff'
-        }).setDepth(2000);
-
-        this.rankText = this.add.text(20, 60, 'POS: 1/10', {
-            fontFamily: '"Press Start 2P"',
-            fontSize: '20px',
-            color: '#ffffff'
-        }).setDepth(2000);
-
-        this.countdownText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY - 50, '10', {
-            fontFamily: '"Press Start 2P"',
-            fontSize: '120px',
-            color: '#ff0000',
-            stroke: '#000000',
-            strokeThickness: 8
-        }).setOrigin(0.5).setDepth(3000);
+        // Inicializa o Gerenciador de HUD
+        this.hudManager = new HUDManager(this);
+        this.hudManager.create();
 
         this.createEnemies();
 
@@ -108,24 +81,10 @@ export class RaceScene extends Scene {
         const dt = delta / 1000;
 
         if (!this.isRacing) {
-            this.countdownTimer -= dt;
-            const displayTime = Math.ceil(this.countdownTimer);
+            const countdownFinished = this.hudManager.updateCountdown(dt);
 
-            if (displayTime > 0) {
-                this.countdownText.setText(displayTime.toString());
-            } else {
+            if (countdownFinished) {
                 this.isRacing = true;
-                this.countdownText.setText('GO!');
-                this.countdownText.setColor('#00ff00');
-
-                this.time.delayedCall(1500, () => {
-                    this.tweens.add({
-                        targets: this.countdownText,
-                        alpha: 0,
-                        duration: 500,
-                        onComplete: () => this.countdownText.setVisible(false)
-                    });
-                });
             }
 
             // Garante que os inimigos fiquem retos e parados durante o countdown
@@ -161,10 +120,7 @@ export class RaceScene extends Scene {
 
         this.lastPosition = currentPos;
 
-        // EXIBIÇÃO EM KM/H (Realista)
-        // Dividimos por 40 para que 12000 no código = 300 KM/H no ecrã
-        const kmh = Math.floor(this.speed / 40);
-        this.speedText.setText(`${kmh} KM/H`);
+        this.hudManager.updateSpeed(this.speed);
 
         if (this.starfield) {
             this.starfield.update();
@@ -237,12 +193,7 @@ export class RaceScene extends Scene {
         // Ordena por distância (descendente)
         participants.sort((a, b) => b.dist - a.dist);
 
-        // Encontra a posição do jogador
-        const playerPos = participants.findIndex(p => p.isPlayer) + 1;
-        const total = participants.length;
-
-        const suffix = ['st', 'nd', 'rd', 'th'][Math.min(playerPos - 1, 3)];
-        this.rankText.setText(`POS: ${playerPos}${playerPos > 3 ? 'th' : suffix} / ${total}`);
+        this.hudManager.updateRankings(participants);
     }
 
     private handleInput(dt: number) {
@@ -391,32 +342,11 @@ export class RaceScene extends Scene {
 
         if (this.currentLap > this.totalLaps) {
             this.speed = 0;
-            this.speedText.setText("FINISH!");
+            this.hudManager.setFinish();
             // Aqui podes disparar uma cena de Game Over ou Vitória
             this.scene.start('GameOver', { score: this.speed });
         } else {
-            this.lapText.setText(`LAP ${this.currentLap}/${this.totalLaps}`);
-
-            // Efeito visual de "LAP COMPLETED"
-            const lapText = this.currentLap === this.totalLaps ? "FINAL LAP!" : `LAP ${this.currentLap}/${this.totalLaps}`;
-            const msg = this.add.text(this.scale.width / 2, this.scale.height / 2, lapText, {
-                fontFamily: '"Press Start 2P"',
-                fontSize: '40px',
-                color: '#ffff00'
-            }).setOrigin(0.5).setDepth(3000);
-
-            this.tweens.add({
-                targets: msg,
-                alpha: 0,
-                y: 100,
-                duration: 2000,
-                onComplete: () => msg.destroy()
-            });
-
-            // Use o sistema de áudio do Phaser de forma leve
-            if (this.sound.get('Bonus')) {
-                this.sound.play('Bonus', { volume: 0.5 });
-            }
+            this.hudManager.onLapComplete(this.currentLap, this.totalLaps);
         }
     }
 
