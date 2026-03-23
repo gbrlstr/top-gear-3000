@@ -104,6 +104,7 @@ export class CollisionManager {
                 const speedLoss = Math.max(900, 1250 + relativeSpeed * 0.35);
 
                 player.speed = Math.max(350, player.speed - speedLoss);
+                player.applyDamage(10, scene);
                 enemy.speed += Math.max(180, relativeSpeed * 0.16);
                 this.playCollisionFeedback(scene, 0.007, 0.55);
                 this.enemyImpactCooldowns.set(enemy.id, now + this.IMPACT_COOLDOWN_MS);
@@ -119,6 +120,7 @@ export class CollisionManager {
             if (impactReady) {
                 enemy.speed *= 0.82;
                 player.speed = Math.max(0, player.speed - 320);
+                player.applyDamage(5, scene);
                 this.playCollisionFeedback(scene, 0.004, 0.35);
                 this.enemyImpactCooldowns.set(enemy.id, now + this.IMPACT_COOLDOWN_MS);
             }
@@ -150,6 +152,7 @@ export class CollisionManager {
 
         const cooldownUntil = this.enemyScrapeCooldowns.get(enemy.id) ?? 0;
         if (now >= cooldownUntil) {
+            player.applyDamage(2, scene);
             this.playCollisionFeedback(scene, 0.0025, 0.25);
             this.enemyScrapeCooldowns.set(enemy.id, now + this.SCRAPE_FX_COOLDOWN_MS);
         }
@@ -168,6 +171,7 @@ export class CollisionManager {
 
             const cooldownUntil = this.edgeCooldowns.get(scene) ?? 0;
             if (now >= cooldownUntil) {
+                player.applyDamage(3, scene);
                 this.playCollisionFeedback(scene, 0.006, 0.4);
                 this.edgeCooldowns.set(scene, now + this.EDGE_FX_COOLDOWN_MS);
             }

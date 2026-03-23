@@ -27,6 +27,7 @@ export class HUDManager {
     private timeContainer!: Phaser.GameObjects.Container;
     private energyBar!: Phaser.GameObjects.Container;
     private carLife!: Phaser.GameObjects.Container;
+    private carLifeSprite!: Phaser.GameObjects.Sprite;
     private speedBarSegments: Phaser.GameObjects.Sprite[] = [];
     private trackMap!: Phaser.GameObjects.Sprite;
     private playerTracker!: Phaser.GameObjects.Sprite;
@@ -67,8 +68,9 @@ export class HUDManager {
         this.updateSpeedBar(0);
 
         this.carLife = this.scene.add.container(56, 92).setDepth(2000);
-        const carLife = this.scene.add.sprite(0, 0, 'hud', 'car_life').setOrigin(0, 0).setScale(3);
-        this.carLife.add(carLife);
+        this.carLifeSprite = this.scene.add.sprite(0, 0, 'hud', 'car_life').setOrigin(0, 0).setScale(3);
+        this.carLife.add(this.carLifeSprite);
+        this.updateCarLife(1);
 
         // --- TOP RIGHT: LAP & TRACK MAP ---
         this.lapContainer = this.scene.add.container(width - 214, 16).setDepth(2000);
@@ -249,6 +251,19 @@ export class HUDManager {
 
     getRaceTime() {
         return this.raceTime;
+    }
+
+    updateCarLife(healthPercent: number) {
+        const clamped = Phaser.Math.Clamp(healthPercent, 0, 1);
+        this.carLifeSprite.clearTint();
+
+        if (clamped < 0.25) {
+            const alpha = Math.floor(this.scene.time.now / 100) % 2 === 0 ? 1 : 0.5;
+            this.carLifeSprite.setAlpha(alpha);
+            return;
+        }
+
+        this.carLifeSprite.setAlpha(1);
     }
 
     stopRaceClock() {

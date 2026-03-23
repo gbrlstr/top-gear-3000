@@ -11,6 +11,9 @@ export class PlayerManager {
     // Player state
     public x = PlayerManager.START_LANE_X;
     public speed = 0;
+    public health = 100;
+    public readonly maxHealth = 100;
+    public isBroken = false;
     private steeringValue = 0;
 
     public readonly maxSpeed = 12000;
@@ -29,6 +32,8 @@ export class PlayerManager {
         // Garante alinhamento central na largada.
         this.x = PlayerManager.START_LANE_X;
         this.speed = 0;
+        this.health = this.maxHealth;
+        this.isBroken = false;
         this.steeringValue = 0;
 
         // Player vehicle sprite
@@ -43,6 +48,11 @@ export class PlayerManager {
 
     handleInput(dt: number, trackManager: TrackManager) {
         if (!this.cursors) return;
+
+        if (this.isBroken) {
+            this.speed = Math.max(0, this.speed - 2400 * dt);
+            return;
+        }
 
         const speedPercent = this.speed / this.maxSpeed;
 
@@ -103,6 +113,24 @@ export class PlayerManager {
             const offRoadLimit = this.maxSpeed * 0.3; // Max speed on grass is 90 KM/H
             if (this.speed > offRoadLimit) {
                 this.speed += (this.breaking * 0.5) * 60 * dt; // Slow down fast
+            }
+        }
+    }
+
+    applyDamage(amount: number, scene: Scene) {
+        if (this.isBroken || amount <= 0) return;
+
+        this.health = Math.max(0, this.health - amount);
+
+        if (this.health <= 0) {
+            this.isBroken = true;
+            this.speed = 0;
+            scene.cameras.main.shake(160, 0.01);
+
+            if (scene.sound.get('Explosion')) {
+                scene.sound.play('Explosion', { volume: 0.45 });
+            } else if (scene.sound.get('Crash')) {
+                scene.sound.play('Crash', { volume: 0.45 });
             }
         }
     }

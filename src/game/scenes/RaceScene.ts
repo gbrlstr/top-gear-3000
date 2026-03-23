@@ -121,6 +121,7 @@ export class RaceScene extends Scene {
             );
 
             this.playerManager.updateVisuals(_time, this.trackManager, this.camHeight);
+            this.hudManager.updateCarLife(this.playerManager.health / this.playerManager.maxHealth);
 
             // TRACKERS UPDATE
             const playerProgress = this.trackManager.position / this.trackManager.trackLength;
@@ -146,6 +147,7 @@ export class RaceScene extends Scene {
         }
 
         this.hudManager.updateSpeed(this.playerManager.speed);
+        this.hudManager.updateCarLife(this.playerManager.health / this.playerManager.maxHealth);
 
         const playerProgress = this.trackManager.position / this.trackManager.trackLength;
         this.hudManager.update(dt, playerProgress);
