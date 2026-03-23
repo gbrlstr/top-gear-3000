@@ -2,6 +2,22 @@ import { EnemyVehicle } from './EnemyVehicle';
 import { TrackManager } from '../road/TrackManager';
 
 export class EnemyManager {
+    private static readonly LANE_CENTERS = [-0.54, -0.18, 0.18, 0.54];
+    private static readonly START_GRID_LANES = [-0.18, 0.18];
+    private static readonly LANE_CAPTURE_RANGE = 0.14;
+    private static readonly SAFE_AHEAD_DISTANCE = 900;
+    private static readonly EMERGENCY_BRAKE_DISTANCE = 240;
+    private static readonly SAFE_REAR_DISTANCE = 260;
+    private static readonly OVERTAKE_TRIGGER_DISTANCE = 520;
+    private static readonly OVERTAKE_MIN_GAIN = 220;
+    private static readonly RETURN_TO_LANE_DISTANCE = 1100;
+    private static readonly START_BASE_Z = 2820;
+    private static readonly START_ROW_SPACING = 230;
+    private static readonly LAUNCH_SETTLE_TIME = 1.25;
+    private static readonly GRID_ROWS = 10;
+    private static readonly PLAYER_GRID_ROW = 9;
+    private static readonly PLAYER_GRID_COL = 0;
+
     public enemies: EnemyVehicle[] = [];
 
     constructor() { }
@@ -11,47 +27,43 @@ export class EnemyManager {
         const colors = ['r00', 'r03', 'r05', 'r07', 'r11', 'r14', 'r17', 'r19'];
         this.enemies = [];
 
-        for (let i = 0; i < 9; i++) {
-            // GRID DE LARGADA:
-            // O Player está fixo na tela em Z=0.
-            // Para que os inimigos não fiquem em cima do player, começamos em Z=400.
+        let enemyId = 0;
+        for (let row = 0; row < EnemyManager.GRID_ROWS; row++) {
+            for (let col = 0; col < EnemyManager.START_GRID_LANES.length; col++) {
+                if (row === EnemyManager.PLAYER_GRID_ROW && col === EnemyManager.PLAYER_GRID_COL) {
+                    continue;
+                }
 
-            const row = Math.floor(i / 2);
+                const finalX = EnemyManager.START_GRID_LANES[col];
+                const finalZ = EnemyManager.START_BASE_Z - (row * EnemyManager.START_ROW_SPACING);
+                const paceRank = row * EnemyManager.START_GRID_LANES.length + col;
+                const targetSpeed = 8600 + ((19 - paceRank) * 110);
+                const accelRate = 1320 + ((EnemyManager.GRID_ROWS - row) * 45) + (col === 1 ? 50 : 0);
+                const launchDelay = (row * 0.12) + (col * 0.03);
+                const color = colors[enemyId % colors.length];
 
-            // ESPAÇAMENTO Z: Aumenta o 400 para distanciar as filas longitudinalmente
-            const z = 2550 - (row * 500);
+                this.enemies.push({
+                    id: enemyId,
+                    z: finalZ,
+                    x: finalX,
+                    speed: 0,
+                    targetSpeed,
+                    accelRate,
+                    color,
+                    frame: '00',
+                    targetX: finalX,
+                    preferredLane: finalX,
+                    launchDelay,
+                    steering: 0,
+                    flipX: false,
+                    laps: 0,
+                    lastZ: finalZ,
+                    finished: false,
+                    percent: 0
+                });
 
-            // POSIÇÃO X: -0.3 é esquerda, 0.3 é direita. 
-            // AJUSTE AQUI para aproximar os carros do centro ou borda
-            const x = (i % 2 === 0) ? 0.3 : -0.2;
-
-            let finalX = x;
-            let finalZ = z;
-
-            // GRID DE LARGADA FINAL:
-            // NPCs em 5 filas, com buffer Z=400 para o Player
-            if (i === 8) {
-                finalZ = 2750 - (row * 500);
-                finalX = -0.15;
+                enemyId++;
             }
-
-            const color = colors[i % colors.length];
-            this.enemies.push({
-                id: i,
-                z: finalZ,
-                x: finalX,
-                speed: 0,
-                targetSpeed: Phaser.Math.Between(7000, 14000),
-                color: color,
-                frame: '00',
-                targetX: finalX,
-                steering: 0,
-                flipX: false,
-                laps: 0,
-                lastZ: finalZ,
-                finished: false,
-                percent: 0
-            });
         }
     }
 
@@ -70,6 +82,8 @@ export class EnemyManager {
         }
 
         this.enemies.forEach(enemy => {
+            enemy.percent += dt;
+
             // Pega o segmento atual do inimigo para saber a curva
             const segmentIndex = Math.floor(enemy.z / trackManager.segmentLength) % trackManager.segments.length;
             const segment = trackManager.segments[segmentIndex];
@@ -78,20 +92,26 @@ export class EnemyManager {
             if (enemy.finished) {
                 enemy.speed = Math.max(0, enemy.speed - dt * 2000);
             } else {
-                // REDUÇÃO DE VELOCIDADE EM CURVAS:
-                // Se a curva for acentuada (abs > 2), reduz a velocidade alvo significativamente
                 let dynamicTargetSpeed = enemy.targetSpeed;
                 if (Math.abs(curve) > 2) {
-                    const curveFactor = Math.abs(curve) / 5; // Escala a penalidade
-                    dynamicTargetSpeed = enemy.targetSpeed * (1 - (curveFactor * 0.4)); // Até 40% de perda
+                    const curveFactor = Math.abs(curve) / 5;
+                    dynamicTargetSpeed = enemy.targetSpeed * (1 - (curveFactor * 0.32));
                 }
 
-                if (enemy.speed < dynamicTargetSpeed) {
-                    enemy.speed += 2000 * dt;
-                    if (enemy.speed > dynamicTargetSpeed) enemy.speed = dynamicTargetSpeed;
+                const launchProgress = Phaser.Math.Clamp(
+                    (enemy.percent - enemy.launchDelay) / 3.2,
+                    0,
+                    1
+                );
+                const launchTargetSpeed = dynamicTargetSpeed * (0.25 + (launchProgress * 0.75));
+
+                if (enemy.speed < launchTargetSpeed) {
+                    enemy.speed += enemy.accelRate * dt;
+                    if (enemy.speed > launchTargetSpeed) enemy.speed = launchTargetSpeed;
                 } else if (enemy.speed > dynamicTargetSpeed) {
-                    // Perda de velocidade forçada em curvas (frenagem)
                     enemy.speed -= 3000 * dt;
+                } else if (enemy.speed > launchTargetSpeed) {
+                    enemy.speed -= 1800 * dt;
                 }
             }
 
@@ -108,17 +128,17 @@ export class EnemyManager {
             enemy.lastZ = enemy.z;
 
             // --- INTELIGÊNCIA DE DESVIO/ULTRAPASSAGEM ---
-            const carAhead = this.getCarAhead(enemy, playerZ, playerX, trackLength);
-            if (carAhead && (carAhead.z - enemy.z) < 1500 && Math.abs(carAhead.x - enemy.x) < 0.4) {
-                // Se alguém está na frente e na mesma zona lateral, muda de faixa
-                enemy.targetX = carAhead.x > 0 ? -0.3 : 0.3;
-            } else if (Math.abs(enemy.x - enemy.targetX) < 0.01) {
-                // Se não há ninguém, garante que está numa das faixas padrão
-                enemy.targetX = enemy.targetX > 0 ? 0.3 : -0.3;
+            const inLaunchPhase = enemy.percent < EnemyManager.LAUNCH_SETTLE_TIME;
+            const laneDecision = this.chooseLane(enemy, playerZ, playerX, trackLength);
+            enemy.targetX = inLaunchPhase ? enemy.preferredLane : laneDecision.targetLane;
+
+            if (laneDecision.aheadDistance < EnemyManager.EMERGENCY_BRAKE_DISTANCE) {
+                enemy.speed = Math.min(enemy.speed, laneDecision.aheadSpeed * 0.96);
+                enemy.speed = Math.max(0, enemy.speed - dt * 2600);
             }
 
             // Movimentação suave lateral
-            const steerSpeed = 0.5 * dt;
+            const steerSpeed = (inLaunchPhase ? 0.45 : 0.62) * dt;
             if (Math.abs(enemy.x - enemy.targetX) > 0.01) {
                 const dir = enemy.x < enemy.targetX ? 1 : -1;
                 enemy.x += dir * steerSpeed;
@@ -144,32 +164,123 @@ export class EnemyManager {
         });
     }
 
-    private getCarAhead(subject: EnemyVehicle, playerZ: number, playerX: number, trackLength: number) {
-        let closest: any = null;
-        let minDist = 2000;
+    private chooseLane(subject: EnemyVehicle, playerZ: number, playerX: number, trackLength: number) {
+        const currentLane = this.getNearestLane(subject.targetX);
+        const homeLane = subject.preferredLane;
+        const lookAheadDistance = Phaser.Math.Clamp(
+            EnemyManager.SAFE_AHEAD_DISTANCE + subject.speed * 0.06,
+            EnemyManager.SAFE_AHEAD_DISTANCE,
+            1500
+        );
+        const currentTraffic = this.getLaneTraffic(subject, currentLane, playerZ, playerX, trackLength);
+        const currentAheadDistance = currentTraffic.aheadDistance ?? 9999;
+        const currentAheadSpeed = currentTraffic.aheadSpeed ?? subject.targetSpeed;
 
-        // Check other NPCs
+        const isBlockedAhead = currentAheadDistance < EnemyManager.OVERTAKE_TRIGGER_DISTANCE;
+        if (!isBlockedAhead) {
+            const homeTraffic = this.getLaneTraffic(subject, homeLane, playerZ, playerX, trackLength);
+            const homeAheadDistance = homeTraffic.aheadDistance ?? 9999;
+            const homeBehindDistance = homeTraffic.behindDistance ?? 9999;
+            const canReturnHome =
+                homeLane !== currentLane &&
+                homeAheadDistance > EnemyManager.RETURN_TO_LANE_DISTANCE &&
+                homeBehindDistance > EnemyManager.SAFE_REAR_DISTANCE;
+
+            return {
+                targetLane: canReturnHome ? homeLane : currentLane,
+                aheadDistance: currentAheadDistance,
+                aheadSpeed: currentAheadSpeed
+            };
+        }
+
+        let bestLane = currentLane;
+        let bestAheadDistance = currentAheadDistance;
+        let bestAheadSpeed = currentAheadSpeed;
+
+        for (const lane of EnemyManager.LANE_CENTERS) {
+            if (lane === currentLane) continue;
+
+            const traffic = this.getLaneTraffic(subject, lane, playerZ, playerX, trackLength);
+            const aheadDistance = traffic.aheadDistance ?? 9999;
+            const behindDistance = traffic.behindDistance ?? 9999;
+            const hasSafeRearGap = behindDistance > EnemyManager.SAFE_REAR_DISTANCE;
+            const hasMeaningfulGain = aheadDistance > currentAheadDistance + EnemyManager.OVERTAKE_MIN_GAIN;
+            const laneStillCrowded = aheadDistance < lookAheadDistance;
+
+            if (!hasSafeRearGap || !hasMeaningfulGain || laneStillCrowded) {
+                continue;
+            }
+
+            if (aheadDistance > bestAheadDistance) {
+                bestLane = lane;
+                bestAheadDistance = aheadDistance;
+                bestAheadSpeed = traffic.aheadSpeed ?? subject.targetSpeed;
+            }
+        }
+
+        return {
+            targetLane: bestLane,
+            aheadDistance: bestAheadDistance,
+            aheadSpeed: bestAheadSpeed
+        };
+    }
+
+    private getLaneTraffic(subject: EnemyVehicle, lane: number, playerZ: number, playerX: number, trackLength: number) {
+        let aheadDistance: number | null = null;
+        let aheadSpeed: number | null = null;
+        let behindDistance: number | null = null;
+
         this.enemies.forEach(other => {
             if (other.id === subject.id) return;
-            let dist = other.z - subject.z;
-            // Trata o wrap-around da pista
-            if (dist < 0) dist += trackLength;
+            if (Math.abs(other.x - lane) > EnemyManager.LANE_CAPTURE_RANGE) return;
 
-            if (dist > 0 && dist < minDist) {
-                closest = other;
-                minDist = dist;
+            const distAhead = this.forwardDistance(subject.z, other.z, trackLength);
+            if (distAhead > 0 && (aheadDistance === null || distAhead < aheadDistance)) {
+                aheadDistance = distAhead;
+                aheadSpeed = other.speed;
+            }
+
+            const distBehind = this.forwardDistance(other.z, subject.z, trackLength);
+            if (distBehind > 0 && (behindDistance === null || distBehind < behindDistance)) {
+                behindDistance = distBehind;
             }
         });
 
-        // Check if player is ahead (and within range)
-        let playerDist = playerZ - subject.z;
-        if (playerDist < 0) playerDist += trackLength;
+        if (Math.abs(playerX - lane) <= EnemyManager.LANE_CAPTURE_RANGE) {
+            const playerAheadDistance = this.forwardDistance(subject.z, playerZ, trackLength);
+            if (playerAheadDistance > 0 && (aheadDistance === null || playerAheadDistance < aheadDistance)) {
+                aheadDistance = playerAheadDistance;
+                aheadSpeed = 0;
+            }
 
-        if (playerDist > 0 && playerDist < minDist) {
-            closest = { z: playerZ, x: playerX };
+            const playerBehindDistance = this.forwardDistance(playerZ, subject.z, trackLength);
+            if (playerBehindDistance > 0 && (behindDistance === null || playerBehindDistance < behindDistance)) {
+                behindDistance = playerBehindDistance;
+            }
         }
 
-        return closest;
+        return { aheadDistance, aheadSpeed, behindDistance };
+    }
+
+    private getNearestLane(x: number) {
+        let bestLane = EnemyManager.LANE_CENTERS[0];
+        let bestDistance = Math.abs(x - bestLane);
+
+        for (const lane of EnemyManager.LANE_CENTERS) {
+            const distance = Math.abs(x - lane);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                bestLane = lane;
+            }
+        }
+
+        return bestLane;
+    }
+
+    private forwardDistance(fromZ: number, toZ: number, trackLength: number) {
+        let dist = toZ - fromZ;
+        if (dist < 0) dist += trackLength;
+        return dist;
     }
 
     getParticipants(playerDist: number, trackLen: number) {

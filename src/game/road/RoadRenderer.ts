@@ -1,6 +1,8 @@
 import { RoadSegment } from './RoadSegment';
 
 export class RoadRenderer {
+    private static readonly LANE_COUNT = 4;
+
     static render(
         graphics: Phaser.GameObjects.Graphics,
         spriteGroup: Phaser.GameObjects.Group,
@@ -61,9 +63,24 @@ export class RoadRenderer {
                 }
 
             } else {
-                // Desenha a faixa pontilhada no centro para segmentos normais
+                // Desenha as divisórias para 4 faixas.
                 if (segment.colors.lane) {
-                    this.drawPolygon(graphics, segment.colors.lane, p1.x, p1.y, p1.w * 0.02, p2.x, p2.y - 1, p2.w * 0.02);
+                    for (let lane = 1; lane < this.LANE_COUNT; lane++) {
+                        const laneRatio = lane / this.LANE_COUNT;
+                        const offset1 = Phaser.Math.Linear(-p1.w, p1.w, laneRatio);
+                        const offset2 = Phaser.Math.Linear(-p2.w, p2.w, laneRatio);
+
+                        this.drawPolygon(
+                            graphics,
+                            segment.colors.lane,
+                            p1.x + offset1,
+                            p1.y,
+                            p1.w * 0.012,
+                            p2.x + offset2,
+                            p2.y - 1,
+                            p2.w * 0.012
+                        );
+                    }
                 }
             }
 

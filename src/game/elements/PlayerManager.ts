@@ -2,12 +2,14 @@ import { Scene } from 'phaser';
 import { TrackManager } from '../road/TrackManager';
 
 export class PlayerManager {
+    private static readonly START_LANE_X = -0.18;
+
     private scene: Scene;
     public vehicle!: Phaser.GameObjects.Sprite;
     public cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
 
     // Player state
-    public x = 0.2; // Adjusted Player X (-1.0 to 1.0)
+    public x = PlayerManager.START_LANE_X;
     public speed = 0;
     private steeringValue = 0;
 
@@ -23,6 +25,11 @@ export class PlayerManager {
     create() {
         const width = this.scene.scale.width;
         const height = this.scene.scale.height;
+
+        // Garante alinhamento central na largada.
+        this.x = PlayerManager.START_LANE_X;
+        this.speed = 0;
+        this.steeringValue = 0;
 
         // Player vehicle sprite
         this.vehicle = this.scene.add.sprite(width / 2, height - 100, 'vehicles', 'rear_r01_c00');
