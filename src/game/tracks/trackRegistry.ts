@@ -1,6 +1,7 @@
 import { TrackData, TrackPalette } from "./trackTypes";
 import { track1 } from "./track1";
 import { track2 } from "./track2";
+import { track3 } from "./track3";
 
 const PALETTES: Record<string, { light: TrackPalette, dark: TrackPalette }> = {
     Nebula: {
@@ -45,10 +46,11 @@ function generateRandomSegments(count: number) {
 
 export const TRACK_COLLECTION: TrackData[] = [
     track1,
-    track2
+    track2,
+    track3
 ];
 
-for (let i = 3; i <= 34; i++) {
+for (let i = 4; i <= 34; i++) {
     const paletteName = PALETTE_NAMES[(i - 1) % PALETTE_NAMES.length];
     const frameNumber = i.toString().padStart(2, '0');
     
