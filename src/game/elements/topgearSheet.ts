@@ -20,13 +20,6 @@ const MONITOR_FRAMES: FrameDef[] = [
     { key: 'monitor_7', x: 13, y: 469, w: 112, h: 63 },
 ];
 
-export const CAR_FRAMES: FrameDef[] = [
-    { key: 'car_purple', x: 261, y: 582, w: 123, h: 109 },
-    { key: 'car_red', x: 388, y: 582, w: 126, h: 109 },
-    { key: 'car_green', x: 261, y: 694, w: 123, h: 110 },
-    { key: 'car_white', x: 389, y: 694, w: 125, h: 110 },
-];
-
 export const SHIP_FRAMES: FrameDef[] = [
     { key: 'ship_small_1', x: 175, y: 258, w: 163, h: 62 },
     { key: 'ship_small_2', x: 177, y: 323, w: 160, h: 64 },
@@ -47,7 +40,6 @@ export const BACKGROUND_FRAMES: FrameDef[] = [
 
 const ALL_FRAMES: FrameDef[] = [
     ...MONITOR_FRAMES,
-    ...CAR_FRAMES,
     ...SHIP_FRAMES,
     ...HUD_FRAMES,
     ...BACKGROUND_FRAMES,

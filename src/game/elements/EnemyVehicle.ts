@@ -11,5 +11,6 @@ export interface EnemyVehicle {
     laps: number;       // Voltas completadas
     lastZ: number;      // Última posição Z (para detecção de volta)
     finished: boolean;  // Se já cruzou a linha de chegada final
+    targetSpeed: number; // Velocidade final desejada
     percent: number;    // Usado para interpolação visual
 }

@@ -14,7 +14,7 @@ export class RaceScene extends Scene {
     private starfield!: Starfield;
 
     // Player variables
-    private playerX = -0.6; // Ajuste o X do player aqui (-1.0 a 1.0)
+    private playerX = 0.2; // Ajuste o X do player aqui (-1.0 a 1.0)
     private speed = 0;
 
     // Constants
@@ -64,8 +64,7 @@ export class RaceScene extends Scene {
         this.spriteGroup = this.add.group().setDepth(20);
 
         // Veículo do jogador
-        this.playerVehicle = this.add.sprite(this.scale.width / 2, this.scale.height - 100, 'vehicles', 'rear_r11_c00');
-        this.playerVehicle.setScale(3.5);
+        this.playerVehicle = this.add.sprite(this.scale.width / 2, this.scale.height - 100, 'vehicles', 'rear_r01_c00');
         this.playerVehicle.setDepth(1000);
 
         // Controles
@@ -137,6 +136,7 @@ export class RaceScene extends Scene {
                 enemy.targetX = enemy.x; // Mantém na posição inicial
             });
 
+            this.updatePlayerVisuals(_time);
             this.renderRoad();
             if (this.starfield) this.starfield.update();
             this.updateRankings();
@@ -173,6 +173,12 @@ export class RaceScene extends Scene {
         this.enemies.forEach(enemy => {
             if (enemy.finished) {
                 enemy.speed = Math.max(0, enemy.speed - dt * 2000);
+            } else {
+                // Aceleração progressiva até a velocidade alvo
+                if (enemy.speed < enemy.targetSpeed) {
+                    enemy.speed += 2000 * dt;
+                    if (enemy.speed > enemy.targetSpeed) enemy.speed = enemy.targetSpeed;
+                }
             }
 
             enemy.z += enemy.speed * dt;
@@ -189,12 +195,12 @@ export class RaceScene extends Scene {
 
             // --- INTELIGÊNCIA DE DESVIO/ULTRAPASSAGEM ---
             const carAhead = this.getCarAhead(enemy);
-            if (carAhead && (carAhead.z - enemy.z) < 1500 && Math.abs(carAhead.x - enemy.x) < 0.5) {
+            if (carAhead && (carAhead.z - enemy.z) < 1500 && Math.abs(carAhead.x - enemy.x) < 0.4) {
                 // Se alguém está na frente e na mesma zona lateral, muda de faixa
-                enemy.targetX = carAhead.x > 0 ? -0.5 : 0.5;
+                enemy.targetX = carAhead.x > 0 ? -0.3 : 0.3;
             } else if (Math.abs(enemy.x - enemy.targetX) < 0.01) {
                 // Se não há ninguém, garante que está numa das faixas padrão
-                enemy.targetX = enemy.targetX > 0 ? 0.5 : -0.5;
+                enemy.targetX = enemy.targetX > 0 ? 0.3 : -0.3;
             }
 
             // Movimentação suave lateral
@@ -330,10 +336,20 @@ export class RaceScene extends Scene {
         ];
 
         const roadCenterX = currentSegment?.p1.screen.x || this.scale.width / 2;
-        const laneOffsetPixels = this.playerX * (currentSegment?.p1.screen.w || 200) * 0.9;
+        const laneOffsetPixels = this.playerX * (currentSegment?.p1.screen.w || 200) * 1.0;
 
         this.playerVehicle.x = roadCenterX + laneOffsetPixels;
-        this.playerVehicle.y = this.scale.height - 110;
+
+        // --- LÓGICA DE ESCALA DINÂMICA (IGUAL AOS INIMIGOS) ---
+        // Calculamos o scale de projeção inverso para a posição Y do carro
+        // scale = (y_screen - height/2) / (camHeight * height/2)
+        const h2 = this.scale.height / 2;
+        const camHeight = this.camHeight;
+        const screenY = this.playerVehicle.y;
+        const projectionScale = (screenY - h2) / (camHeight * h2);
+
+        // Aplica o mesmo multiplicador de resolução dos inimigos (4000)
+        this.playerVehicle.setScale(projectionScale * 4500);
     }
 
     private renderRoad() {
@@ -358,7 +374,7 @@ export class RaceScene extends Scene {
 
         // Ajusta a posição Y visual do carro para que ele não fique "flutuando" ou "entrando" na pista
         // Em subidas, o carro deve subir levemente na tela
-        this.playerVehicle.y = (this.scale.height - 110) - (this.speed / this.maxSpeed) * 10;
+        this.playerVehicle.y = (this.scale.height - 120) - (this.speed / this.maxSpeed) * 10;
 
         RoadRenderer.render(
             this.roadGraphics,
@@ -418,9 +434,9 @@ export class RaceScene extends Scene {
             // ESPAÇAMENTO Z: Aumenta o 400 para distanciar as filas longitudinalmente
             const z = 2550 - (row * 400);
 
-            // POSIÇÃO X: -0.6 é esquerda, 0.45 é direita. 
+            // POSIÇÃO X: -0.3 é esquerda, 0.3 é direita. 
             // AJUSTE AQUI para aproximar os carros do centro ou borda
-            const x = (i % 2 === 0) ? -0.20 : -0.6;
+            const x = (i % 2 === 0) ? 0.3 : -0.2;
 
             let finalX = x;
             let finalZ = z;
@@ -429,7 +445,7 @@ export class RaceScene extends Scene {
             // NPCs em 5 filas, com buffer Z=400 para o Player
             if (i === 8) {
                 finalZ = 2750 - (row * 400);
-                finalX = -0.20;
+                finalX = -0.15;
             }
 
 
@@ -438,7 +454,8 @@ export class RaceScene extends Scene {
                 id: i,
                 z: finalZ,
                 x: finalX,
-                speed: Phaser.Math.Between(7000, 11000),
+                speed: 0,
+                targetSpeed: Phaser.Math.Between(8000, 14000),
                 color: color,
                 frame: '00',
                 targetX: finalX,
