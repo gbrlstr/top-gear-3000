@@ -50,14 +50,14 @@ Usar este arquivo como checklist vivo para acompanhar:
 
 ### 3. Bonus e bonus secretos
 
-- [ ] Implementar bonus coletaveis na pista
-- [ ] Implementar bonus secretos no fim da corrida
-- [ ] Bonus A: terminar a corrida com boost ativo
+- [x] Implementar bonus coletaveis na pista
+- [x] Implementar bonus secretos no fim da corrida
+- [x] Bonus A: terminar a corrida com boost ativo
 - [ ] Bonus B: manter como pendente de confirmacao
-- [ ] Bonus C: nao colidir com outros carros
-- [ ] Bonus D: nao colidir com obstaculos ou bordas relevantes
-- [ ] Bonus E: nao sair para fora da pista
-- [ ] Criar telemetria para rastrear colisao, off-road e uso de boost
+- [x] Bonus C: nao colidir com outros carros
+- [x] Bonus D: nao colidir com obstaculos ou bordas relevantes
+- [x] Bonus E: nao sair para fora da pista
+- [x] Criar telemetria para rastrear colisao, off-road e uso de boost
 
 ### 4. Progressao de upgrades
 

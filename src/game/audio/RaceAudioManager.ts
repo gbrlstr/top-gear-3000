@@ -72,6 +72,10 @@ export class RaceAudioManager {
         this.playOneShot('Bonus', 0.5);
     }
 
+    playOneShotBoost() {
+        this.playOneShot('Nitro', 0.42);
+    }
+
     setRechargeActive(active: boolean) {
         if (!active) {
             this.stopEngineLayer(this.rechargeLoop);

@@ -27,8 +27,16 @@ export interface ChampionshipState {
     credits: number;
 }
 
+export interface RaceRewardEntry {
+    label: string;
+    amount: number;
+}
+
 export interface RaceCreditSummary {
     position: number;
+    baseCredits: number;
+    rewardEntries: RaceRewardEntry[];
+    pendingEntries: string[];
     earnedCredits: number;
     totalCredits: number;
 }
@@ -63,11 +71,17 @@ export function getCreditsForPosition(position: number) {
     return CHAMPIONSHIP_CREDITS[position - 1] ?? 0;
 }
 
-export function awardRaceCredits(participants: RaceParticipant[]): RaceCreditSummary {
+export function awardRaceCredits(
+    participants: RaceParticipant[],
+    rewardEntries: RaceRewardEntry[] = [],
+    pendingEntries: string[] = []
+): RaceCreditSummary {
     const sorted = sortRaceParticipants(participants);
     const playerIndex = sorted.findIndex(participant => participant.isPlayer);
     const position = playerIndex >= 0 ? playerIndex + 1 : sorted.length;
-    const earnedCredits = getCreditsForPosition(position);
+    const baseCredits = getCreditsForPosition(position);
+    const extraCredits = rewardEntries.reduce((sum, entry) => sum + Math.max(0, Math.floor(entry.amount)), 0);
+    const earnedCredits = baseCredits + extraCredits;
 
     const state = loadChampionshipState();
     const totalCredits = state.credits + earnedCredits;
@@ -78,6 +92,9 @@ export function awardRaceCredits(participants: RaceParticipant[]): RaceCreditSum
 
     return {
         position,
+        baseCredits,
+        rewardEntries: rewardEntries.filter(entry => entry.amount > 0),
+        pendingEntries,
         earnedCredits,
         totalCredits
     };

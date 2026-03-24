@@ -48,29 +48,64 @@ export class ResultsScene extends Scene {
         graphics.lineStyle(4, 0xff0000, 1);
         graphics.lineBetween(58, 126, width - 58, 126);
         graphics.lineStyle(2, 0x2bd7ff, 1);
-        graphics.strokeRoundedRect(width - 308, 138, 248, 68, 10);
+        graphics.strokeRoundedRect(width - 316, 138, 256, 146, 10);
 
         const creditSummary = this.creditSummary ?? {
             position: this.raceRankings.findIndex(entry => entry.isPlayer) + 1,
+            baseCredits: CHAMPIONSHIP_CREDITS[this.raceRankings.findIndex(entry => entry.isPlayer)] ?? 0,
+            rewardEntries: [],
+            pendingEntries: [],
             earnedCredits: CHAMPIONSHIP_CREDITS[this.raceRankings.findIndex(entry => entry.isPlayer)] ?? 0,
             totalCredits: loadChampionshipState().credits
         };
 
-        this.add.text(width - 290, 148, 'RACE CREDITS', {
+        this.add.text(width - 298, 148, 'RACE CREDITS', {
             fontFamily: '"Press Start 2P"',
             fontSize: '11px',
             color: '#00ffff'
         }).setOrigin(0, 0);
 
-        this.add.text(width - 290, 170, `P${creditSummary.position}  +${this.formatCredits(creditSummary.earnedCredits)} CR`, {
+        this.add.text(width - 298, 166, `POSITION P${creditSummary.position}`, {
             fontFamily: '"Press Start 2P"',
-            fontSize: '12px',
+            fontSize: '10px',
             color: '#ffe166'
         }).setOrigin(0, 0);
 
-        this.add.text(width - 290, 188, `TOTAL ${this.formatCredits(creditSummary.totalCredits)} CR`, {
+        let rewardY = 184;
+        this.add.text(width - 298, rewardY, `BASE   +${this.formatCredits(creditSummary.baseCredits)} CR`, {
             fontFamily: '"Press Start 2P"',
-            fontSize: '12px',
+            fontSize: '10px',
+            color: '#ffffff'
+        }).setOrigin(0, 0);
+        rewardY += 16;
+
+        creditSummary.rewardEntries.slice(0, 4).forEach(entry => {
+            this.add.text(width - 298, rewardY, `${entry.label} +${this.formatCredits(entry.amount)} CR`, {
+                fontFamily: '"Press Start 2P"',
+                fontSize: '9px',
+                color: '#9dff9d'
+            }).setOrigin(0, 0);
+            rewardY += 15;
+        });
+
+        if (creditSummary.pendingEntries.length > 0) {
+            this.add.text(width - 298, rewardY, creditSummary.pendingEntries[0], {
+                fontFamily: '"Press Start 2P"',
+                fontSize: '8px',
+                color: '#d8a8ff'
+            }).setOrigin(0, 0);
+            rewardY += 14;
+        }
+
+        this.add.text(width - 298, rewardY + 4, `TOTAL +${this.formatCredits(creditSummary.earnedCredits)} CR`, {
+            fontFamily: '"Press Start 2P"',
+            fontSize: '10px',
+            color: '#ffe166'
+        }).setOrigin(0, 0);
+
+        this.add.text(width - 298, rewardY + 22, `BANK ${this.formatCredits(creditSummary.totalCredits)} CR`, {
+            fontFamily: '"Press Start 2P"',
+            fontSize: '10px',
             color: '#7cff7c'
         }).setOrigin(0, 0);
 

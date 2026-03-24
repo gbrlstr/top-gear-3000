@@ -41,6 +41,8 @@ export class CollisionManager {
     ) {
         const trackLength = trackManager.trackLength;
         const now = scene.time.now;
+        let carCollision = false;
+        let obstacleCollision = false;
 
         for (const enemy of enemies) {
             const collision = this.getCollisionData(player.x, playerWorldZ, enemy.x, enemy.z, trackLength);
@@ -49,13 +51,13 @@ export class CollisionManager {
             const isRearImpact = collision.absDz > this.REAR_IMPACT_Z && collision.absDx < this.REAR_ALIGN_X;
 
             if (isRearImpact) {
-                this.resolvePlayerRearImpact(player, trackManager, enemy, playerWorldZ, collision.dz, now, scene);
+                carCollision = this.resolvePlayerRearImpact(player, trackManager, enemy, playerWorldZ, collision.dz, now, scene) || carCollision;
             } else {
-                this.resolvePlayerSideScrape(player, enemy, collision.dx, now, scene);
+                carCollision = this.resolvePlayerSideScrape(player, enemy, collision.dx, now, scene) || carCollision;
             }
         }
 
-        this.handleRoadEdgeCollision(player, scene);
+        obstacleCollision = this.handleRoadEdgeCollision(player, scene) || obstacleCollision;
 
         for (let i = 0; i < enemies.length; i++) {
             for (let j = i + 1; j < enemies.length; j++) {
@@ -66,6 +68,11 @@ export class CollisionManager {
                 this.resolveEnemyCollision(e1, e2, collision.dz, trackLength);
             }
         }
+
+        return {
+            carCollision,
+            obstacleCollision
+        };
     }
 
     private static getCollisionData(x1: number, z1: number, x2: number, z2: number, trackLength: number) {
@@ -93,6 +100,7 @@ export class CollisionManager {
         const playerOffsetZ = this.getWrappedDistance(playerWorldZ, trackManager.position, trackLength);
         const cooldownUntil = this.enemyImpactCooldowns.get(enemy.id) ?? 0;
         const impactReady = now >= cooldownUntil;
+        let collided = false;
 
         if (dz > 0) {
             trackManager.position = this.wrapZ(enemy.z - playerOffsetZ - this.SAFE_GAP_Z, trackLength);
@@ -109,6 +117,7 @@ export class CollisionManager {
                 enemy.speed += Math.max(180, relativeSpeed * 0.16);
                 this.playCollisionFeedback(scene, 0.007, 0.55);
                 this.enemyImpactCooldowns.set(enemy.id, now + this.IMPACT_COOLDOWN_MS);
+                collided = true;
             } else {
                 player.speed = Math.min(player.speed, enemy.speed + 120);
             }
@@ -124,10 +133,12 @@ export class CollisionManager {
                 player.applyDamage(5, scene);
                 this.playCollisionFeedback(scene, 0.004, 0.35);
                 this.enemyImpactCooldowns.set(enemy.id, now + this.IMPACT_COOLDOWN_MS);
+                collided = true;
             }
         }
 
         player.x = Phaser.Math.Clamp(player.x, -this.ROAD_LIMIT_X, this.ROAD_LIMIT_X);
+        return collided;
     }
 
     private static resolvePlayerSideScrape(
@@ -156,15 +167,19 @@ export class CollisionManager {
             player.applyDamage(2, scene);
             this.playCollisionFeedback(scene, 0.0025, 0.25);
             this.enemyScrapeCooldowns.set(enemy.id, now + this.SCRAPE_FX_COOLDOWN_MS);
+            return true;
         }
+
+        return false;
     }
 
     private static handleRoadEdgeCollision(player: PlayerManager, scene: Phaser.Scene) {
         const absX = Math.abs(player.x);
-        if (absX <= this.ROAD_EDGE_X) return;
+        if (absX <= this.ROAD_EDGE_X) return false;
 
         const dir = Math.sign(player.x) || 1;
         const now = scene.time.now;
+        let collided = false;
 
         if (absX > this.ROAD_WALL_X) {
             player.speed = Math.max(0, player.speed - 420);
@@ -175,6 +190,7 @@ export class CollisionManager {
                 player.applyDamage(3, scene);
                 this.playCollisionFeedback(scene, 0.006, 0.4);
                 this.edgeCooldowns.set(scene, now + this.EDGE_FX_COOLDOWN_MS);
+                collided = true;
             }
         } else {
             player.speed = Math.max(0, player.speed - 180);
@@ -182,6 +198,7 @@ export class CollisionManager {
         }
 
         player.x = Phaser.Math.Clamp(player.x, -this.ROAD_LIMIT_X, this.ROAD_LIMIT_X);
+        return collided;
     }
 
     private static resolveEnemyCollision(e1: EnemyVehicle, e2: EnemyVehicle, dz: number, trackLength: number) {

@@ -5,10 +5,14 @@ import { RaceAudioManager } from '../audio/RaceAudioManager';
 export class PlayerManager {
     private static readonly START_LANE_X = -0.18;
     private static readonly BROKEN_MAX_SPEED = 800; // 10 km/h no HUD
+    private static readonly BOOST_DURATION_S = 1.4;
+    private static readonly BOOST_SPEED_BONUS = 4200;
+    private static readonly BOOST_ACCEL_BONUS = 85;
 
     private scene: Scene;
     public vehicle!: Phaser.GameObjects.Sprite;
     public cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+    private boostKey?: Phaser.Input.Keyboard.Key;
 
     // Player state
     public x = PlayerManager.START_LANE_X;
@@ -18,7 +22,11 @@ export class PlayerManager {
     public fuel = 100;
     public readonly maxFuel = 100;
     public isBroken = false;
+    public isOffRoad = false;
+    public boostUses = 4;
     private steeringValue = 0;
+    private boostTimer = 0;
+    private boostWasUsed = false;
 
     public readonly maxSpeed = 12000;
     private readonly accel = 35;
@@ -39,7 +47,11 @@ export class PlayerManager {
         this.health = this.maxHealth;
         this.fuel = this.maxFuel;
         this.isBroken = false;
+        this.isOffRoad = false;
+        this.boostUses = 4;
         this.steeringValue = 0;
+        this.boostTimer = 0;
+        this.boostWasUsed = false;
 
         // Player vehicle sprite
         this.vehicle = this.scene.add.sprite(width / 2, height - 100, 'vehicles', 'rear_r01_c00');
@@ -48,13 +60,26 @@ export class PlayerManager {
         // Control input
         if (this.scene.input.keyboard) {
             this.cursors = this.scene.input.keyboard.createCursorKeys();
+            this.boostKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
         }
     }
 
     handleInput(dt: number, trackManager: TrackManager) {
         if (!this.cursors) return;
 
-        const currentMaxSpeed = this.isBroken ? PlayerManager.BROKEN_MAX_SPEED : this.maxSpeed;
+        if (!this.isBroken && this.boostKey && Phaser.Input.Keyboard.JustDown(this.boostKey)) {
+            this.activateBoost();
+        }
+
+        if (this.boostTimer > 0) {
+            this.boostTimer = Math.max(0, this.boostTimer - dt);
+        }
+
+        const boostActive = this.isBoostActive();
+        const baseMaxSpeed = this.isBroken ? PlayerManager.BROKEN_MAX_SPEED : this.maxSpeed;
+        const currentMaxSpeed = boostActive && !this.isBroken
+            ? baseMaxSpeed + PlayerManager.BOOST_SPEED_BONUS
+            : baseMaxSpeed;
         const speedPercent = this.speed / currentMaxSpeed;
 
         // PROGRESSIVE ACCELERATION:
@@ -63,7 +88,8 @@ export class PlayerManager {
         const accelBase = this.isBroken ? this.accel * 0.35 : this.accel;
         const brakingBase = this.isBroken ? this.breaking * 0.35 : this.breaking;
         const decelBase = this.isBroken ? this.decel * 0.45 : this.decel;
-        const currentAccel = accelBase * powerMult * 60 * dt;
+        const boostAccel = boostActive && !this.isBroken ? PlayerManager.BOOST_ACCEL_BONUS : 0;
+        const currentAccel = (accelBase + boostAccel) * powerMult * 60 * dt;
 
         const braking = brakingBase * 60 * dt;
         const decel = decelBase * 60 * dt;
@@ -114,8 +140,9 @@ export class PlayerManager {
 
         // 4. Roadsides & Grass Penalty
         this.x = Phaser.Math.Clamp(this.x, -2, 2);
+        this.isOffRoad = Math.abs(this.x) > 1.0;
 
-        if (Math.abs(this.x) > 1.0) { // Off-road
+        if (this.isOffRoad) { // Off-road
             const offRoadLimit = currentMaxSpeed * 0.3;
             if (this.speed > offRoadLimit) {
                 this.speed += (this.breaking * 0.5) * 60 * dt; // Slow down fast
@@ -154,6 +181,31 @@ export class PlayerManager {
         if (amount <= 0 || this.fuel >= this.maxFuel) return false;
 
         this.fuel = Math.min(this.maxFuel, this.fuel + amount);
+        return true;
+    }
+
+    addBoostUses(amount: number) {
+        if (amount <= 0) return 0;
+        this.boostUses += amount;
+        return this.boostUses;
+    }
+
+    isBoostActive() {
+        return this.boostTimer > 0;
+    }
+
+    hasUsedBoost() {
+        return this.boostWasUsed;
+    }
+
+    private activateBoost() {
+        if (this.boostUses <= 0) return false;
+
+        this.boostUses--;
+        this.boostTimer = PlayerManager.BOOST_DURATION_S;
+        this.boostWasUsed = true;
+        this.speed = Math.max(this.speed, this.maxSpeed * 0.78);
+        RaceAudioManager.fromScene(this.scene)?.playOneShotBoost();
         return true;
     }
 

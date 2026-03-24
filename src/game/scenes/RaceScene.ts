@@ -12,7 +12,19 @@ import { TrackDebugView } from '../utils/TrackDebugView';
 import { getPlayerName, mergeLeaguePoints, RaceParticipant, sortRaceParticipants } from '../league/league';
 import { RaceAudioManager } from '../audio/RaceAudioManager';
 import { awardRaceCredits, resetChampionshipState } from '../championship/championship';
+import { createRaceTelemetry, evaluateSecretBonuses, RaceTelemetry } from '../championship/bonuses';
 import { ParallaxBackground } from '../backgrounds/ParallaxBackground';
+
+type RacePickupType = 'credits' | 'boost';
+
+interface RacePickup {
+    id: string;
+    z: number;
+    x: number;
+    type: RacePickupType;
+    amount: number;
+    collected: boolean;
+}
 
 export class RaceScene extends Scene {
     private trackId: number = 1;
@@ -24,6 +36,9 @@ export class RaceScene extends Scene {
     private playerManager!: PlayerManager;
     private raceAudio!: RaceAudioManager;
     private debugView!: TrackDebugView;
+    private pickupGroup!: Phaser.GameObjects.Group;
+    private pickups: RacePickup[] = [];
+    private telemetry: RaceTelemetry = createRaceTelemetry();
 
     private roadWidth = 2000;
     private drawDistance = 120; // Reduzido para evitar sobreposição excessiva e jitter
@@ -72,6 +87,8 @@ export class RaceScene extends Scene {
         this.finishedPlayerCar = null;
         this.finishCameraDeadlineMs = null;
         this.resetChampionship = false;
+        this.telemetry = createRaceTelemetry();
+        this.pickups = [];
 
         // Inicializa o gerenciador de pista
         const selectedTrack = TRACK_COLLECTION.find(t => t.id === this.trackId);
@@ -87,6 +104,9 @@ export class RaceScene extends Scene {
         // GRUPO PARA SPRITES LATERAIS (Árvores/Placas)
         // Usamos um grupo para gerenciar imagens individuais, permitindo escalas diferentes.
         this.spriteGroup = this.add.group().setDepth(20);
+        this.pickupGroup = this.add.group().setDepth(19);
+        this.createPickupTextures();
+        this.pickups = this.generateTrackPickups();
 
         // Veículo do jogador
         this.playerManager = new PlayerManager(this);
@@ -157,6 +177,7 @@ export class RaceScene extends Scene {
             }
 
             this.renderRoad();
+            this.renderPickups();
             if (this.parallaxBackground) {
                 this.parallaxBackground.update(dt, this.playerManager.speed, this.playerManager.x, this.trackManager);
             }
@@ -166,6 +187,12 @@ export class RaceScene extends Scene {
 
         if (!this.playerFinished) {
             this.playerManager.handleInput(dt, this.trackManager);
+            if (this.playerManager.isOffRoad) {
+                this.telemetry.offRoadMoments++;
+            }
+            if (this.playerManager.hasUsedBoost()) {
+                this.telemetry.boostUsed = true;
+            }
         }
         const previousPlayerWorldZ = this.getPlayerWorldZ();
 
@@ -209,17 +236,20 @@ export class RaceScene extends Scene {
         );
 
         if (!this.playerFinished) {
-            CollisionManager.handleCollisions(
+            const collisionState = CollisionManager.handleCollisions(
                 this.playerManager,
                 this.trackManager,
                 this.enemyManager.enemies,
                 this,
                 playerWorldZ
             );
+            if (collisionState.carCollision) this.telemetry.carCollisionCount++;
+            if (collisionState.obstacleCollision) this.telemetry.obstacleCollisionCount++;
         }
 
         if (!this.playerFinished && this.isRacing) {
             this.handleSupportZones(playerWorldZ, dt);
+            this.updatePickupCollection(playerWorldZ);
         }
 
         if (!this.playerFinished && crossedFinishLine) {
@@ -232,6 +262,7 @@ export class RaceScene extends Scene {
         this.updateRaceCompletionFlow();
 
         this.renderRoad();
+        this.renderPickups();
         this.playerManager.updateVisuals(_time, this.trackManager, this.camHeight);
 
         // Update Debug View
@@ -378,6 +409,7 @@ export class RaceScene extends Scene {
         };
 
         this.playerFinished = true;
+        this.telemetry.finishWithBoostActive = this.playerManager.isBoostActive();
         this.playerFinishTime ??= this.hudManager.getRaceTime();
         this.finishCameraDeadlineMs = this.time.now + RaceScene.MAX_CAMERA_DEADLINE_MS;
         this.raceAudio.setRepairActive(false);
@@ -403,7 +435,8 @@ export class RaceScene extends Scene {
         this.resultsQueued = true;
         const finalRankings = this.getSortedParticipants();
         const leagueTable = mergeLeaguePoints(finalRankings);
-        const creditSummary = awardRaceCredits(finalRankings);
+        const bonusOutcome = evaluateSecretBonuses(this.telemetry);
+        const creditSummary = awardRaceCredits(finalRankings, bonusOutcome.rewardEntries, bonusOutcome.pendingEntries);
 
         this.time.delayedCall(2000, () => {
             this.scene.start('ResultsScene', {
@@ -458,6 +491,118 @@ export class RaceScene extends Scene {
     private wrapTrackZ(z: number) {
         const trackLength = this.trackManager.trackLength;
         return ((z % trackLength) + trackLength) % trackLength;
+    }
+
+    private createPickupTextures() {
+        if (!this.textures.exists('pickup_credits')) {
+            const graphics = this.make.graphics({});
+            graphics.fillStyle(0xffd54a, 1);
+            graphics.fillCircle(10, 10, 8);
+            graphics.lineStyle(2, 0x7a3c00, 1);
+            graphics.strokeCircle(10, 10, 8);
+            graphics.generateTexture('pickup_credits', 20, 20);
+            graphics.destroy();
+        }
+
+        if (!this.textures.exists('pickup_boost')) {
+            const graphics = this.make.graphics({});
+            graphics.fillStyle(0x3ad1ff, 1);
+            graphics.fillCircle(10, 10, 8);
+            graphics.lineStyle(2, 0x003e66, 1);
+            graphics.strokeCircle(10, 10, 8);
+            graphics.lineStyle(2, 0xffffff, 1);
+            graphics.lineBetween(10, 3, 10, 17);
+            graphics.lineBetween(3, 10, 17, 10);
+            graphics.generateTexture('pickup_boost', 20, 20);
+            graphics.destroy();
+        }
+    }
+
+    private generateTrackPickups(): RacePickup[] {
+        const trackLength = this.trackManager.trackLength;
+        const seed: Array<Pick<RacePickup, 'type' | 'amount'> & { progress: number; x: number }> = [
+            { type: 'credits', amount: 10000, progress: 0.16, x: -0.54 },
+            { type: 'boost', amount: 1, progress: 0.33, x: 0.18 },
+            { type: 'credits', amount: 15000, progress: 0.51, x: -0.18 },
+            { type: 'boost', amount: 1, progress: 0.69, x: 0.54 },
+            { type: 'credits', amount: 20000, progress: 0.83, x: 0.18 }
+        ];
+
+        return seed.map((pickup, index) => ({
+            id: `pickup:${index}`,
+            z: trackLength * pickup.progress,
+            x: pickup.x,
+            type: pickup.type,
+            amount: pickup.amount,
+            collected: false
+        }));
+    }
+
+    private updatePickupCollection(playerWorldZ: number) {
+        const trackLength = this.trackManager.trackLength;
+
+        this.pickups.forEach(pickup => {
+            if (pickup.collected) return;
+
+            let dz = pickup.z - playerWorldZ;
+            if (dz > trackLength / 2) dz -= trackLength;
+            if (dz < -trackLength / 2) dz += trackLength;
+
+            const closeEnoughZ = Math.abs(dz) <= 120;
+            const closeEnoughX = Math.abs(this.playerManager.x - pickup.x) <= 0.18;
+            if (!closeEnoughZ || !closeEnoughX) return;
+
+            pickup.collected = true;
+            if (pickup.type === 'credits') {
+                this.telemetry.collectedTrackCredits += pickup.amount;
+            } else {
+                this.playerManager.addBoostUses(pickup.amount);
+                this.telemetry.collectedBoostPickups += pickup.amount;
+            }
+
+            this.raceAudio.playBonus();
+        });
+    }
+
+    private renderPickups() {
+        this.pickupGroup.children.iterate((child: any) => {
+            child.setVisible(false);
+            return true;
+        });
+
+        let spriteIndex = 0;
+        const children = this.pickupGroup.getChildren() as Phaser.GameObjects.Image[];
+
+        this.pickups.forEach(pickup => {
+            if (pickup.collected) return;
+
+            const segment = this.trackManager.getSegment(pickup.z);
+            const p1 = segment.p1.screen;
+            const p2 = segment.p2.screen;
+            if (p1.y < p2.y) return;
+            if (p2.y < this.scale.height * 0.35 - 20) return;
+
+            const segmentZ = Math.max(1, segment.p2.world.z - segment.p1.world.z);
+            const percent = Phaser.Math.Clamp((pickup.z - segment.p1.world.z) / segmentZ, 0, 1);
+            const y = p1.y + (p2.y - p1.y) * percent;
+            const roadHalfWidth = p1.w + (p2.w - p1.w) * percent;
+            const x = p1.x + (p2.x - p1.x) * percent + roadHalfWidth * pickup.x;
+            const scale = Math.max(0.18, (p1.scale! + (p2.scale! - p1.scale!) * percent) * 900);
+
+            let sprite = children[spriteIndex];
+            if (!sprite) {
+                sprite = this.add.image(x, y, 'pickup_credits');
+                this.pickupGroup.add(sprite);
+            }
+
+            sprite.setTexture(pickup.type === 'credits' ? 'pickup_credits' : 'pickup_boost');
+            sprite.setVisible(true);
+            sprite.setPosition(x, y);
+            sprite.setScale(scale);
+            sprite.setOrigin(0.5, 1);
+            sprite.setDepth(19 + (y / 1000));
+            spriteIndex++;
+        });
     }
 
 }
