@@ -9,7 +9,8 @@ export class RoadRenderer {
         width: number,
         horizon: number,
         segments: RoadSegment[],
-        enemies: any[] = [] // Adicione o array de inimigos como parâmetro
+        enemies: any[] = [], // Adicione o array de inimigos como parâmetro
+        timeMs: number = 0
     ) {
         graphics.clear();
 
@@ -45,9 +46,12 @@ export class RoadRenderer {
             this.drawPolygon(graphics, segment.colors.road, p1.x, p1.y, p1.w, p2.x, p2.y - 1, p2.w);
 
             if (segment.isRepairZone) {
+                const pulse = 0.5 + 0.5 * Math.sin((timeMs + segment.index * 35) / 160);
+                const repairColor = this.getPulsingRepairColor(segment.repairColor, pulse);
+
                 this.drawRoadHalf(
                     graphics,
-                    segment.repairColor,
+                    repairColor,
                     p1.x,
                     p1.y,
                     p1.w,
@@ -56,6 +60,20 @@ export class RoadRenderer {
                     p2.w,
                     segment.repairSide,
                     segment.repairWidth
+                );
+
+                this.drawRoadHalf(
+                    graphics,
+                    0xff7a3a,
+                    p1.x,
+                    p1.y,
+                    p1.w,
+                    p2.x,
+                    p2.y - 1,
+                    p2.w,
+                    segment.repairSide,
+                    Math.max(0.14, segment.repairWidth * (0.18 + pulse * 0.12)),
+                    0.22 + pulse * 0.18
                 );
             }
 
@@ -179,13 +197,14 @@ export class RoadRenderer {
         y2: number,
         w2: number,
         side: 'left' | 'right',
-        widthPercent: number
+        widthPercent: number,
+        alpha: number = 1
     ) {
         const width = Phaser.Math.Clamp(widthPercent, 0.1, 1);
         const leftStartRatio = side === 'left' ? -1 : 1 - width * 2;
         const leftEndRatio = side === 'left' ? -1 + width * 2 : 1;
 
-        g.fillStyle(color);
+        g.fillStyle(color, alpha);
         g.beginPath();
         g.moveTo(x1 + w1 * leftStartRatio, y1);
         g.lineTo(x2 + w2 * leftStartRatio, y2);
@@ -193,5 +212,18 @@ export class RoadRenderer {
         g.lineTo(x1 + w1 * leftEndRatio, y1);
         g.closePath();
         g.fillPath();
+    }
+
+    private static getPulsingRepairColor(baseColor: number, pulse: number) {
+        const base = Phaser.Display.Color.IntegerToColor(baseColor);
+        const glow = new Phaser.Display.Color(255, 110, 40);
+        const mixed = Phaser.Display.Color.Interpolate.ColorWithColor(
+            base,
+            glow,
+            100,
+            Math.round(pulse * 100)
+        );
+
+        return Phaser.Display.Color.GetColor(mixed.r, mixed.g, mixed.b);
     }
 }

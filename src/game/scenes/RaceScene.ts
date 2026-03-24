@@ -271,7 +271,8 @@ export class RaceScene extends Scene {
             this.scale.width,
             this.scale.height * 0.35,
             segmentsToRender,
-            this.getRenderableCars()
+            this.getRenderableCars(),
+            this.time.now
         );
     }
 
