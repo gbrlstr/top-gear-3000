@@ -3,6 +3,8 @@ import { TrackData } from "./trackTypes";
 export const track3: TrackData = {
     id: 3,
     name: "Toxic Loop",
+    backgroundFrame: "bg_03",
+    backgroundSkyColor: 0x101533,
     palette: {
         light: { road: 0x446644, grass: 0x113311, rumble: 0x448844, lane: 0x88dd88, startLine: 0xffffff },
         dark: { road: 0x335533, grass: 0x002200, rumble: 0x44cc44, startLine: 0xffffff }

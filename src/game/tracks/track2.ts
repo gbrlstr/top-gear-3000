@@ -3,6 +3,8 @@ import { TrackData } from "./trackTypes";
 export const track2: TrackData = {
     id: 2,
     name: 'Red Canyon',
+    backgroundFrame: 'bg_05',
+    backgroundSkyColor: 0xe6d2d8,
     palette: {
         light: { road: 0x664444, grass: 0x331111, rumble: 0x884444, lane: 0xdd8888, startLine: 0xffffff },
         dark: { road: 0x553333, grass: 0x220000, rumble: 0xcc4444, startLine: 0xffffff }

@@ -28,6 +28,8 @@ export interface TrackRepairZone {
 export interface TrackData {
     id: number;
     name: string;
+    backgroundFrame?: string;
+    backgroundSkyColor?: number;
     palette: {
         light: TrackPalette;
         dark: TrackPalette;

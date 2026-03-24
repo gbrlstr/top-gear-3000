@@ -19,6 +19,11 @@ export class HUDManager {
         'hud_speedbar_red_1'
     ];
     private static readonly FUEL_BAR_SEGMENT_COUNT = 8;
+    private static readonly SPEED_BAR_SCALE = 3;
+    private static readonly SPEED_BAR_SPACING = 22;
+    private static readonly FUEL_BAR_SCALE = 2.15;
+    private static readonly FUEL_BAR_SEGMENT_SPACING = 9;
+    private static readonly FUEL_BAR_START_Y = 28;
 
     private scene: Scene;
 
@@ -69,7 +74,12 @@ export class HUDManager {
         this.energyBar = this.scene.add.container(58, 62).setDepth(2000);
         this.speedBarSegments = [];
         for (let i = 0; i < HUDManager.SPEED_BAR_FRAMES.length; i++) {
-            const segment = this.scene.add.sprite(i * 11, 0, 'hud', 'char_quote_double').setOrigin(0, 0).setScale(3);
+            const segment = this.scene.add.sprite(
+                i * HUDManager.SPEED_BAR_SPACING,
+                0,
+                'hud',
+                'char_quote_double'
+            ).setOrigin(0, 0).setScale(HUDManager.SPEED_BAR_SCALE);
             this.energyBar.add(segment);
             this.speedBarSegments.push(segment);
         }
@@ -96,11 +106,11 @@ export class HUDManager {
         this.fuelHud.add(fuelBadgeDigit);
 
         this.fuelBar = this.scene.add.container(53, -19);
-        this.fuelBarContainer = this.scene.add.sprite(0, 0, 'hud', 'bar_v_container').setOrigin(0, 0).setScale(2.15);
+        this.fuelBarContainer = this.scene.add.sprite(0, 0, 'hud', 'bar_v_container').setOrigin(0, 0).setScale(HUDManager.FUEL_BAR_SCALE);
         this.fuelBar.add(this.fuelBarContainer);
         this.fuelBarSegments = [];
         for (let i = 0; i < HUDManager.FUEL_BAR_SEGMENT_COUNT; i++) {
-            const segment = this.scene.add.sprite(0, 0, 'hud', 'misc_03').setOrigin(0, 0).setScale(2.15);
+            const segment = this.scene.add.sprite(0, 0, 'hud', 'misc_03').setOrigin(0, 0).setScale(HUDManager.FUEL_BAR_SCALE);
             this.fuelBar.add(segment);
             this.fuelBarSegments.push(segment);
         }
@@ -348,7 +358,7 @@ export class HUDManager {
             const reverseIndex = HUDManager.FUEL_BAR_SEGMENT_COUNT - 1 - index;
             const isActive = reverseIndex < activeSegments;
 
-            segment.setPosition(0, 26 - index * 3.6);
+            segment.setPosition(0, HUDManager.FUEL_BAR_START_Y - index * HUDManager.FUEL_BAR_SEGMENT_SPACING);
             segment.setFrame(frame);
             segment.setVisible(isActive);
             segment.setAlpha(clamped <= 0.18 ? blinkAlpha : 1);

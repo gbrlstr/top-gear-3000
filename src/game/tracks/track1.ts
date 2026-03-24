@@ -3,6 +3,8 @@ import { TrackData } from "./trackTypes";
 export const track1: TrackData = {
     id: 1,
     name: 'Nebula Road',
+    backgroundFrame: 'bg_01',
+    backgroundSkyColor: 0x8a9ce0,
     palette: {
         light: { road: 0x444444, grass: 0x101010, rumble: 0x555555, lane: 0xcccccc, startLine: 0xffffff },
         dark: { road: 0x404040, grass: 0x000000, rumble: 0xbb0000, startLine: 0xffffff }

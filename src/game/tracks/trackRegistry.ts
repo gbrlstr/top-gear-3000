@@ -28,6 +28,24 @@ function randInt(min: number, max: number) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function getBackgroundFrame(trackId: number) {
+    const frameId = ((trackId - 1) % 56) + 1;
+    return `bg_${frameId.toString().padStart(2, '0')}`;
+}
+
+function getBackgroundSkyColor(paletteName: string) {
+    switch (paletteName) {
+        case 'Mars':
+            return 0xe1c7cf;
+        case 'Toxic':
+            return 0x1a1c44;
+        case 'Ice':
+            return 0xb7c7f2;
+        default:
+            return 0x7f93dc;
+    }
+}
+
 function generateRandomSegments(count: number) {
     const segments = [];
     for (let i = 0; i < count; i++) {
@@ -86,6 +104,8 @@ for (let i = 4; i <= 34; i++) {
     TRACK_COLLECTION.push({
         id: i,
         name: `${paletteName} Track ${i}`,
+        backgroundFrame: getBackgroundFrame(i),
+        backgroundSkyColor: getBackgroundSkyColor(paletteName),
         palette: PALETTES[paletteName],
         segments,
         rechargeZone: generateRechargeZone(segments, i),

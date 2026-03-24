@@ -93,7 +93,18 @@ Usar este arquivo como checklist vivo para acompanhar:
 - [ ] Adicionar corridas noturnas e com neblina mais marcantes
 - [ ] Adicionar pistas com menos recarga para forcar estrategia
 
-### 8. Recursos especiais do Top Gear 3000
+### 8. Parallax e backgrounds por mapa
+
+- [x] Implementar sistema de parallax para os cenarios de fundo
+- [x] Associar um background especifico para cada mapa/pista
+- [x] Definir camadas de fundo com velocidades diferentes para reforcar profundidade
+- [x] Integrar o parallax com curva, movimento lateral e velocidade do carro
+- [ ] Ajustar transicao visual entre pistas com backgrounds diferentes
+- [ ] Suportar variacoes de visibilidade conforme clima, noite e neblina
+- [x] Garantir que cada mapa use o background correto durante a corrida
+- [ ] Validar performance do parallax sem comprometer a fluidez da renderizacao
+
+### 9. Recursos especiais do Top Gear 3000
 
 - [ ] Implementar `Boost`
 - [ ] Implementar `Jump`
@@ -102,20 +113,20 @@ Usar este arquivo como checklist vivo para acompanhar:
 - [ ] Implementar `Infrared` em corridas noturnas
 - [ ] Permitir alternancia entre recursos/weapons
 
-### 9. Estruturas especiais de pista
+### 10. Estruturas especiais de pista
 
 - [ ] Implementar atalhos
 - [ ] Implementar pistas bifurcadas
 - [ ] Implementar warp pads
 - [ ] Implementar bonus aleatorios na pista
 
-### 10. IA do campeonato
+### 11. IA do campeonato
 
 - [ ] Fazer os rivais evoluirem ao longo do campeonato
 - [ ] Ajustar velocidade da IA conforme progresso do jogo
 - [ ] Revisar comportamento da IA em pistas especiais, atalhos e recursos
 
-### 11. Persistencia
+### 12. Persistencia
 
 - [ ] Salvar estado completo do campeonato
 - [ ] Salvar pontos, credits, upgrades e pista atual
@@ -136,8 +147,9 @@ Usar este arquivo como checklist vivo para acompanhar:
 - [ ] 3. Implementar rastreamento e concessao de bonus secretos
 - [ ] 4. Implementar upgrades persistentes
 - [ ] 5. Fazer a dificuldade afetar o campeonato de verdade
-- [ ] 6. Estruturar progressao completa do Championship
-- [ ] 7. Expandir pistas, atalhos, bonus de pista e weapons
+- [ ] 6. Implementar parallax e backgrounds por mapa
+- [ ] 7. Estruturar progressao completa do Championship
+- [ ] 8. Expandir pistas, atalhos, bonus de pista e weapons
 
 ## Observacoes
 

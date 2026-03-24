@@ -1,6 +1,5 @@
 import { Scene } from 'phaser';
 import { EventBus } from '../EventBus';
-import { Starfield } from '../Starfield';
 import { TrackManager } from '../road/TrackManager';
 import { RoadRenderer } from '../road/RoadRenderer';
 import { TRACK_COLLECTION } from '../tracks/trackRegistry';
@@ -13,12 +12,13 @@ import { TrackDebugView } from '../utils/TrackDebugView';
 import { getPlayerName, mergeLeaguePoints, RaceParticipant, sortRaceParticipants } from '../league/league';
 import { RaceAudioManager } from '../audio/RaceAudioManager';
 import { awardRaceCredits, resetChampionshipState } from '../championship/championship';
+import { ParallaxBackground } from '../backgrounds/ParallaxBackground';
 
 export class RaceScene extends Scene {
     private trackId: number = 1;
     private trackManager!: TrackManager;
     private roadGraphics!: Phaser.GameObjects.Graphics;
-    private starfield!: Starfield;
+    private parallaxBackground!: ParallaxBackground;
     private hudManager!: HUDManager;
     private enemyManager!: EnemyManager;
     private playerManager!: PlayerManager;
@@ -77,8 +77,9 @@ export class RaceScene extends Scene {
         const selectedTrack = TRACK_COLLECTION.find(t => t.id === this.trackId);
         this.trackManager = new TrackManager(selectedTrack!);
 
-        // Fundo (Estrelas)
-        this.starfield = new Starfield(this);
+        // Fundo com parallax baseado no background da pista.
+        this.parallaxBackground = new ParallaxBackground(this);
+        this.parallaxBackground.create(this.trackManager.currentTrack, this.scale.height * 0.35);
 
         // Camada de renderização da estrada
         this.roadGraphics = this.add.graphics().setName('roadGraphics').setDepth(10);
@@ -156,7 +157,9 @@ export class RaceScene extends Scene {
             }
 
             this.renderRoad();
-            if (this.starfield) this.starfield.update();
+            if (this.parallaxBackground) {
+                this.parallaxBackground.update(dt, this.playerManager.speed, this.playerManager.x, this.trackManager);
+            }
             this.updateRankings();
             return;
         }
@@ -184,8 +187,8 @@ export class RaceScene extends Scene {
         const playerProgress = this.trackManager.position / this.trackManager.trackLength;
         this.hudManager.update(dt, playerProgress);
 
-        if (this.starfield) {
-            this.starfield.update();
+        if (this.parallaxBackground) {
+            this.parallaxBackground.update(dt, this.playerManager.speed, this.playerManager.x, this.trackManager);
         }
 
         const playerWorldZ = this.getPlayerWorldZ();
