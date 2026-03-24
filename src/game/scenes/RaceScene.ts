@@ -130,6 +130,7 @@ export class RaceScene extends Scene {
 
             this.playerManager.updateVisuals(_time, this.trackManager, this.camHeight);
             this.hudManager.updateCarLife(this.playerManager.health / this.playerManager.maxHealth);
+            this.hudManager.updateFuel(this.playerManager.fuel / this.playerManager.maxFuel);
             this.raceAudio.update(
                 this.playerManager.speed,
                 this.playerManager.health / this.playerManager.maxHealth,
@@ -162,6 +163,7 @@ export class RaceScene extends Scene {
 
         this.hudManager.updateSpeed(this.playerManager.speed);
         this.hudManager.updateCarLife(this.playerManager.health / this.playerManager.maxHealth);
+        this.hudManager.updateFuel(this.playerManager.fuel / this.playerManager.maxFuel);
         this.raceAudio.update(
             this.playerManager.speed,
             this.playerManager.health / this.playerManager.maxHealth,

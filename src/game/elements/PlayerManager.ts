@@ -14,6 +14,8 @@ export class PlayerManager {
     public speed = 0;
     public health = 100;
     public readonly maxHealth = 100;
+    public fuel = 100;
+    public readonly maxFuel = 100;
     public isBroken = false;
     private steeringValue = 0;
 
@@ -34,6 +36,7 @@ export class PlayerManager {
         this.x = PlayerManager.START_LANE_X;
         this.speed = 0;
         this.health = this.maxHealth;
+        this.fuel = this.maxFuel;
         this.isBroken = false;
         this.steeringValue = 0;
 
@@ -66,7 +69,9 @@ export class PlayerManager {
         const decel = this.decel * 60 * dt;
 
         // 1. Speed Control
-        if (this.cursors.up.isDown) {
+        const isAccelerating = this.cursors.up.isDown && this.fuel > 0;
+
+        if (isAccelerating) {
             this.speed += currentAccel;
         } else if (this.cursors.down.isDown) {
             this.speed += braking;
@@ -116,6 +121,8 @@ export class PlayerManager {
                 this.speed += (this.breaking * 0.5) * 60 * dt; // Slow down fast
             }
         }
+
+        this.consumeFuel(dt, isAccelerating);
     }
 
     applyDamage(amount: number, scene: Scene) {
@@ -136,6 +143,27 @@ export class PlayerManager {
 
         this.health = Math.min(this.maxHealth, this.health + amount);
         return true;
+    }
+
+    refuel(amount: number) {
+        if (amount <= 0 || this.fuel >= this.maxFuel) return false;
+
+        this.fuel = Math.min(this.maxFuel, this.fuel + amount);
+        return true;
+    }
+
+    private consumeFuel(dt: number, isAccelerating: boolean) {
+        if (this.fuel <= 0) {
+            this.fuel = 0;
+            return;
+        }
+
+        const speedPercent = this.speed / this.maxSpeed;
+        const movingDrain = speedPercent > 0 ? 0.12 + speedPercent * 0.48 : 0;
+        const accelDrain = isAccelerating ? 0.34 : 0;
+        const drain = movingDrain + accelDrain;
+
+        this.fuel = Math.max(0, this.fuel - drain * dt);
     }
 
     updateVisuals(time: number, trackManager: TrackManager, camHeight: number) {

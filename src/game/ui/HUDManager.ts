@@ -18,6 +18,7 @@ export class HUDManager {
         'hud_speedbar_red_1',
         'hud_speedbar_red_1'
     ];
+    private static readonly FUEL_BAR_SEGMENT_COUNT = 8;
 
     private scene: Scene;
 
@@ -27,9 +28,13 @@ export class HUDManager {
     private posContainer!: Phaser.GameObjects.Container;
     private timeContainer!: Phaser.GameObjects.Container;
     private energyBar!: Phaser.GameObjects.Container;
+    private fuelHud!: Phaser.GameObjects.Container;
+    private fuelBar!: Phaser.GameObjects.Container;
+    private fuelBarContainer!: Phaser.GameObjects.Sprite;
     private carLife!: Phaser.GameObjects.Container;
     private carLifeSprite!: Phaser.GameObjects.Sprite;
     private speedBarSegments: Phaser.GameObjects.Sprite[] = [];
+    private fuelBarSegments: Phaser.GameObjects.Sprite[] = [];
     private trackMap!: Phaser.GameObjects.Sprite;
     private playerTracker!: Phaser.GameObjects.Sprite;
     private trackMapOffset: number = 0;
@@ -68,6 +73,38 @@ export class HUDManager {
             this.speedBarSegments.push(segment);
         }
         this.updateSpeedBar(0);
+
+        this.fuelHud = this.scene.add.container(width - 74, height - 70).setDepth(2000);
+
+        const fuelPipColor = 0x21ff35;
+        const fuelPipYs = [7, 0, -7];
+        fuelPipYs.forEach(y => {
+            const pip = this.scene.add.rectangle(0, y, 9, 5, fuelPipColor).setOrigin(0, 0.5);
+            pip.setStrokeStyle(1.5, 0x000000);
+            this.fuelHud.add(pip);
+        });
+
+        const fuelBadgeBg = this.scene.add.rectangle(20, 0, 30, 22, 0xffea36).setOrigin(0, 0.5);
+        fuelBadgeBg.setStrokeStyle(2.5, 0x000000);
+        this.fuelHud.add(fuelBadgeBg);
+
+        const fuelBadgeInner = this.scene.add.rectangle(24, 0, 20, 12, 0x000000).setOrigin(0, 0.5);
+        this.fuelHud.add(fuelBadgeInner);
+
+        const fuelBadgeDigit = this.scene.add.sprite(28, -7, 'hud', 'digit_3').setOrigin(0, 0).setScale(1.55);
+        this.fuelHud.add(fuelBadgeDigit);
+
+        this.fuelBar = this.scene.add.container(53, -19);
+        this.fuelBarContainer = this.scene.add.sprite(0, 0, 'hud', 'bar_v_container').setOrigin(0, 0).setScale(2.15);
+        this.fuelBar.add(this.fuelBarContainer);
+        this.fuelBarSegments = [];
+        for (let i = 0; i < HUDManager.FUEL_BAR_SEGMENT_COUNT; i++) {
+            const segment = this.scene.add.sprite(0, 0, 'hud', 'misc_03').setOrigin(0, 0).setScale(2.15);
+            this.fuelBar.add(segment);
+            this.fuelBarSegments.push(segment);
+        }
+        this.fuelHud.add(this.fuelBar);
+        this.updateFuel(1);
 
         this.carLife = this.scene.add.container(56, 92).setDepth(2000);
         this.carLifeSprite = this.scene.add.sprite(0, 0, 'hud', 'car_life').setOrigin(0, 0).setScale(3);
@@ -285,6 +322,23 @@ export class HUDManager {
         this.carLifeSprite.setAlpha(1);
     }
 
+    updateFuel(fuelPercent: number) {
+        const clamped = Phaser.Math.Clamp(fuelPercent, 0, 1);
+        const activeSegments = Math.round(clamped * HUDManager.FUEL_BAR_SEGMENT_COUNT);
+        const blinkAlpha = Math.floor(this.scene.time.now / 100) % 2 === 0 ? 1 : 0.35;
+        const frame = this.getFuelFrame(clamped);
+
+        this.fuelBarSegments.forEach((segment, index) => {
+            const reverseIndex = HUDManager.FUEL_BAR_SEGMENT_COUNT - 1 - index;
+            const isActive = reverseIndex < activeSegments;
+
+            segment.setPosition(0, 26 - index * 3.6);
+            segment.setFrame(frame);
+            segment.setVisible(isActive);
+            segment.setAlpha(clamped <= 0.18 ? blinkAlpha : 1);
+        });
+    }
+
     stopRaceClock() {
         this.isRacing = false;
     }
@@ -355,5 +409,14 @@ export class HUDManager {
                 segment.setAlpha(0.6);
             }
         });
+    }
+
+    private getFuelFrame(fuelPercent: number) {
+        if (fuelPercent > 0.6) return 'misc_03';
+        if (fuelPercent > 0.45) return 'bar_red_1';
+        if (fuelPercent > 0.3) return 'bar_red_2';
+        if (fuelPercent > 0.2) return 'bar_red_3';
+        if (fuelPercent > 0.1) return 'bar_red_4';
+        return 'bar_red_5';
     }
 }
