@@ -4,6 +4,7 @@ import { RaceAudioManager } from '../audio/RaceAudioManager';
 
 export class PlayerManager {
     private static readonly START_LANE_X = -0.18;
+    private static readonly BROKEN_MAX_SPEED = 800; // 10 km/h no HUD
 
     private scene: Scene;
     public vehicle!: Phaser.GameObjects.Sprite;
@@ -53,23 +54,22 @@ export class PlayerManager {
     handleInput(dt: number, trackManager: TrackManager) {
         if (!this.cursors) return;
 
-        if (this.isBroken) {
-            this.speed = Math.max(0, this.speed - 2400 * dt);
-            return;
-        }
-
-        const speedPercent = this.speed / this.maxSpeed;
+        const currentMaxSpeed = this.isBroken ? PlayerManager.BROKEN_MAX_SPEED : this.maxSpeed;
+        const speedPercent = this.speed / currentMaxSpeed;
 
         // PROGRESSIVE ACCELERATION:
         // Accelerates fast until 150 KM/H, then slower
         const powerMult = speedPercent < 0.5 ? 1.0 : 1.0 - (speedPercent - 0.5);
-        const currentAccel = this.accel * powerMult * 60 * dt;
+        const accelBase = this.isBroken ? this.accel * 0.35 : this.accel;
+        const brakingBase = this.isBroken ? this.breaking * 0.35 : this.breaking;
+        const decelBase = this.isBroken ? this.decel * 0.45 : this.decel;
+        const currentAccel = accelBase * powerMult * 60 * dt;
 
-        const braking = this.breaking * 60 * dt;
-        const decel = this.decel * 60 * dt;
+        const braking = brakingBase * 60 * dt;
+        const decel = decelBase * 60 * dt;
 
         // 1. Speed Control
-        const isAccelerating = this.cursors.up.isDown && this.fuel > 0;
+        const isAccelerating = this.cursors.up.isDown && (this.isBroken || this.fuel > 0);
 
         if (isAccelerating) {
             this.speed += currentAccel;
@@ -80,7 +80,7 @@ export class PlayerManager {
         }
 
         // Clamp speed logically
-        this.speed = Phaser.Math.Clamp(this.speed, 0, this.maxSpeed);
+        this.speed = Phaser.Math.Clamp(this.speed, 0, currentMaxSpeed);
 
         // 2. Dynamic Steering
         if (this.speed > 0) {
@@ -116,13 +116,15 @@ export class PlayerManager {
         this.x = Phaser.Math.Clamp(this.x, -2, 2);
 
         if (Math.abs(this.x) > 1.0) { // Off-road
-            const offRoadLimit = this.maxSpeed * 0.3; // Max speed on grass is 90 KM/H
+            const offRoadLimit = currentMaxSpeed * 0.3;
             if (this.speed > offRoadLimit) {
                 this.speed += (this.breaking * 0.5) * 60 * dt; // Slow down fast
             }
         }
 
-        this.consumeFuel(dt, isAccelerating);
+        if (!this.isBroken) {
+            this.consumeFuel(dt, isAccelerating);
+        }
     }
 
     applyDamage(amount: number, scene: Scene) {
@@ -132,16 +134,19 @@ export class PlayerManager {
 
         if (this.health <= 0) {
             this.isBroken = true;
-            this.speed = 0;
+            this.speed = Math.min(this.speed, PlayerManager.BROKEN_MAX_SPEED);
             scene.cameras.main.shake(160, 0.01);
             RaceAudioManager.fromScene(scene)?.playExplosion();
         }
     }
 
     repair(amount: number) {
-        if (this.isBroken || amount <= 0 || this.health >= this.maxHealth) return false;
+        if (amount <= 0 || this.health >= this.maxHealth) return false;
 
         this.health = Math.min(this.maxHealth, this.health + amount);
+        if (this.health > 0) {
+            this.isBroken = false;
+        }
         return true;
     }
 
