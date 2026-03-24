@@ -12,6 +12,7 @@ import { CollisionManager } from '../elements/CollisionManager';
 import { TrackDebugView } from '../utils/TrackDebugView';
 import { getPlayerName, mergeLeaguePoints, RaceParticipant, sortRaceParticipants } from '../league/league';
 import { RaceAudioManager } from '../audio/RaceAudioManager';
+import { awardRaceCredits, resetChampionshipState } from '../championship/championship';
 
 export class RaceScene extends Scene {
     private trackId: number = 1;
@@ -42,12 +43,14 @@ export class RaceScene extends Scene {
     private finishCameraPosition: number = 0;
     private finishedPlayerCar: EnemyVehicle | null = null;
     private finishCameraDeadlineMs: number | null = null;
+    private resetChampionship: boolean = false;
     private static readonly MAX_CAMERA_DEADLINE_MS = 4000;
 
 
 
-    init(data: { trackId?: number }) {
+    init(data: { trackId?: number, resetChampionship?: boolean }) {
         this.trackId = data.trackId || 1;
+        this.resetChampionship = Boolean(data.resetChampionship);
     }
 
     constructor() {
@@ -55,6 +58,10 @@ export class RaceScene extends Scene {
     }
 
     create() {
+        if (this.resetChampionship) {
+            resetChampionshipState();
+        }
+
         this.playerName = getPlayerName();
         this.playerFinished = false;
         this.playerFinishTime = null;
@@ -64,6 +71,7 @@ export class RaceScene extends Scene {
         this.finishCameraPosition = 0;
         this.finishedPlayerCar = null;
         this.finishCameraDeadlineMs = null;
+        this.resetChampionship = false;
 
         // Inicializa o gerenciador de pista
         const selectedTrack = TRACK_COLLECTION.find(t => t.id === this.trackId);
@@ -392,12 +400,14 @@ export class RaceScene extends Scene {
         this.resultsQueued = true;
         const finalRankings = this.getSortedParticipants();
         const leagueTable = mergeLeaguePoints(finalRankings);
+        const creditSummary = awardRaceCredits(finalRankings);
 
         this.time.delayedCall(2000, () => {
             this.scene.start('ResultsScene', {
                 rankings: finalRankings,
                 leagueTable,
-                trackId: this.trackId
+                trackId: this.trackId,
+                creditSummary
             });
         });
     }

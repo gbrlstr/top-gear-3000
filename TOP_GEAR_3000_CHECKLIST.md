@@ -43,10 +43,10 @@ Usar este arquivo como checklist vivo para acompanhar:
 
 ### 2. Economia do Championship
 
-- [ ] Criar sistema de `credits`
-- [ ] Recompensar o jogador ao final de cada corrida
-- [ ] Exibir ganhos no resultado pos-corrida
-- [ ] Persistir saldo de credits entre corridas
+- [x] Criar sistema de `credits`
+- [x] Recompensar o jogador ao final de cada corrida
+- [x] Exibir ganhos no resultado pos-corrida
+- [x] Persistir saldo de credits entre corridas
 
 ### 3. Bonus e bonus secretos
 

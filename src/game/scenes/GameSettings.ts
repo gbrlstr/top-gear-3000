@@ -244,7 +244,7 @@ export class GameSettings extends Scene {
             if (selectedLabel === 'RACE') {
                 this.playSelectSound();
                 this.sound.stopAll();
-                this.scene.start('RaceScene');
+                this.scene.start('RaceScene', { trackId: 1, resetChampionship: true });
             } else if (selectedLabel === 'NAME') {
                 this.playSelectSound();
                 this.scene.start('PlayerNameScene');

@@ -2,11 +2,13 @@ import { Scene } from 'phaser';
 import { EventBus } from '../EventBus';
 import { Starfield } from '../Starfield';
 import { LEAGUE_POINTS, LeagueEntry, RaceParticipant, loadLeagueTable } from '../league/league';
+import { CHAMPIONSHIP_CREDITS, loadChampionshipState, RaceCreditSummary } from '../championship/championship';
 
 export class ResultsScene extends Scene {
     private starfield!: Starfield;
     private raceRankings: RaceParticipant[] = [];
     private leagueTable: LeagueEntry[] = [];
+    private creditSummary: RaceCreditSummary | null = null;
     private trackId: number;
     private resultRows: Phaser.GameObjects.Container[] = [];
 
@@ -14,9 +16,10 @@ export class ResultsScene extends Scene {
         super('ResultsScene');
     }
 
-    init(data: { rankings?: RaceParticipant[], leagueTable?: LeagueEntry[], trackId?: number }) {
+    init(data: { rankings?: RaceParticipant[], leagueTable?: LeagueEntry[], trackId?: number, creditSummary?: RaceCreditSummary }) {
         this.raceRankings = data.rankings || [];
         this.leagueTable = data.leagueTable || loadLeagueTable();
+        this.creditSummary = data.creditSummary || null;
         this.trackId = data.trackId || 1;
     }
 
@@ -44,8 +47,34 @@ export class ResultsScene extends Scene {
         const graphics = this.add.graphics();
         graphics.lineStyle(4, 0xff0000, 1);
         graphics.lineBetween(58, 126, width - 58, 126);
+        graphics.lineStyle(2, 0x2bd7ff, 1);
+        graphics.strokeRoundedRect(width - 308, 138, 248, 68, 10);
 
-        const startY = 172;
+        const creditSummary = this.creditSummary ?? {
+            position: this.raceRankings.findIndex(entry => entry.isPlayer) + 1,
+            earnedCredits: CHAMPIONSHIP_CREDITS[this.raceRankings.findIndex(entry => entry.isPlayer)] ?? 0,
+            totalCredits: loadChampionshipState().credits
+        };
+
+        this.add.text(width - 290, 148, 'RACE CREDITS', {
+            fontFamily: '"Press Start 2P"',
+            fontSize: '11px',
+            color: '#00ffff'
+        }).setOrigin(0, 0);
+
+        this.add.text(width - 290, 170, `P${creditSummary.position}  +${this.formatCredits(creditSummary.earnedCredits)} CR`, {
+            fontFamily: '"Press Start 2P"',
+            fontSize: '12px',
+            color: '#ffe166'
+        }).setOrigin(0, 0);
+
+        this.add.text(width - 290, 188, `TOTAL ${this.formatCredits(creditSummary.totalCredits)} CR`, {
+            fontFamily: '"Press Start 2P"',
+            fontSize: '12px',
+            color: '#7cff7c'
+        }).setOrigin(0, 0);
+
+        const startY = 186;
         const rowHeight = 26;
         const columnX = {
             rank: 88,
@@ -155,5 +184,9 @@ export class ResultsScene extends Scene {
             stroke,
             strokeThickness: 3
         };
+    }
+
+    private formatCredits(value: number) {
+        return Math.max(0, Math.floor(value)).toLocaleString('en-US');
     }
 }
