@@ -142,12 +142,12 @@ Usar este arquivo como checklist vivo para acompanhar:
 
 ## Ordem Recomendada de Implementacao
 
-- [ ] 1. Separar `Repair` e `Recharge`
-- [ ] 2. Implementar `credits` e tela de ganhos
+- [x] 1. Separar `Repair` e `Recharge`
+- [x] 2. Implementar `credits` e tela de ganhos
 - [ ] 3. Implementar rastreamento e concessao de bonus secretos
 - [ ] 4. Implementar upgrades persistentes
 - [ ] 5. Fazer a dificuldade afetar o campeonato de verdade
-- [ ] 6. Implementar parallax e backgrounds por mapa
+- [x] 6. Implementar parallax e backgrounds por mapa
 - [ ] 7. Estruturar progressao completa do Championship
 - [ ] 8. Expandir pistas, atalhos, bonus de pista e weapons
 

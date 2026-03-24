@@ -91,16 +91,7 @@ export class RoadRenderer {
 
                 // 2. Xadrez (agora visível de mais longe)
                 if (p1.w > 5) { // Diminuído de 30 para 5 para aparecer no horizonte
-                    const columns = 10;
-                    const checkW1 = (p1.w * 2) / columns;
-                    const checkW2 = (p2.w * 2) / columns;
-                    for (let c = 0; c < columns; c++) {
-                        if (c % 2 === 0) {
-                            this.drawPolygon(graphics, 0x000000,
-                                p1.x - p1.w + (c * checkW1) + checkW1 / 2, p1.y, checkW1 / 2,
-                                p2.x - p2.w + (c * checkW2) + checkW2 / 2, p2.y - 1, checkW2 / 2);
-                        }
-                    }
+                    this.drawCheckeredStartLine(graphics, p1.x, p1.y, p1.w, p2.x, p2.y - 1, p2.w);
                 }
 
             } else {
@@ -250,6 +241,53 @@ export class RoadRenderer {
             Math.max(0.14, widthPercent * (0.18 + pulse * 0.12)),
             0.22 + pulse * 0.18
         );
+    }
+
+    private static drawCheckeredStartLine(
+        g: Phaser.GameObjects.Graphics,
+        x1: number,
+        y1: number,
+        w1: number,
+        x2: number,
+        y2: number,
+        w2: number
+    ) {
+        const rows = 1;
+        const columns = 10;
+        const bandTopRatio = -0.35;
+
+        for (let row = 0; row < rows; row++) {
+            const rowStartRatio = bandTopRatio + ((1 - bandTopRatio) * (row / rows));
+            const rowEndRatio = bandTopRatio + ((1 - bandTopRatio) * ((row + 1) / rows));
+
+            const topY = Phaser.Math.Linear(y1, y2, rowStartRatio);
+            const bottomY = Phaser.Math.Linear(y1, y2, rowEndRatio);
+            const topX = Phaser.Math.Linear(x1, x2, rowStartRatio);
+            const bottomX = Phaser.Math.Linear(x1, x2, rowEndRatio);
+            const topW = Phaser.Math.Linear(w1, w2, rowStartRatio);
+            const bottomW = Phaser.Math.Linear(w1, w2, rowEndRatio);
+
+            for (let col = 0; col < columns; col++) {
+                if ((row + col) % 2 !== 0) continue;
+
+                const colStartRatio = col / columns;
+                const colEndRatio = (col + 1) / columns;
+
+                const topLeft = topX - topW + (topW * 2 * colStartRatio);
+                const topRight = topX - topW + (topW * 2 * colEndRatio);
+                const bottomLeft = bottomX - bottomW + (bottomW * 2 * colStartRatio);
+                const bottomRight = bottomX - bottomW + (bottomW * 2 * colEndRatio);
+
+                g.fillStyle(0x000000);
+                g.beginPath();
+                g.moveTo(topLeft, topY);
+                g.lineTo(bottomLeft, bottomY);
+                g.lineTo(bottomRight, bottomY);
+                g.lineTo(topRight, topY);
+                g.closePath();
+                g.fillPath();
+            }
+        }
     }
 
     private static getPulsingZoneColor(baseColor: number, glowColor: number, pulse: number) {

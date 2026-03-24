@@ -170,8 +170,8 @@ export class TrackManager {
                 }
 
                 // MARCAÇÃO DA LINHA DE CHEGADA:
-                // Movemos para o meio da primeira reta (índice 50-57) para garantir que esteja em reta
-                if (segmentIndex >= 40 && segmentIndex < 48) {
+                // Movemos para o meio da primeira reta (índice 30-37) para garantir que esteja em reta
+                if (segmentIndex >= 30 && segmentIndex < 33) {
                     segment.isStartLine = true;
                     if (this.startLineStartZ === 0) {
                         this.startLineStartZ = segment.p1.world.z;

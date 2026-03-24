@@ -6,8 +6,8 @@ export const track1: TrackData = {
     backgroundFrame: 'bg_01',
     backgroundSkyColor: 0x8a9ce0,
     palette: {
-        light: { road: 0x444444, grass: 0x101010, rumble: 0x555555, lane: 0xcccccc, startLine: 0xffffff },
-        dark: { road: 0x404040, grass: 0x000000, rumble: 0xbb0000, startLine: 0xffffff }
+        light: { road: 0x444444, grass: 0x2f6f2a, rumble: 0xffffff, lane: 0xcccccc, startLine: 0xffffff },
+        dark: { road: 0x404040, grass: 0x1f4f1b, rumble: 0x86c8ff, startLine: 0xffffff }
     },
     segments: [
         // Reta Inferior (Largada - Estreita)
