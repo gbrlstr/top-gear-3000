@@ -25,6 +25,14 @@ export const track1: TrackData = {
         // Curva 4 (Canto Inferior Esquerdo)
         { length: 30, curve: 8, hill: 0 }
     ],
+    repairZone: {
+        startSegment: 130,
+        endSegment: 225,
+        side: 'left',
+        color: 0xff2020,
+        width: 0.5,
+        healPerSecond: 24
+    },
     trackMapFrame: 'track_01',
     trackMapOffset: 0
 };

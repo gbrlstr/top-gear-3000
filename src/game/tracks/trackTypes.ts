@@ -6,6 +6,16 @@ export interface TrackPalette {
     startLine: number; // Cor específica para a linha de chegada
     lane?: number;
 }
+
+export interface TrackRepairZone {
+    startSegment: number;
+    endSegment: number;
+    side: 'left' | 'right';
+    color?: number;
+    width?: number;
+    healPerSecond?: number;
+}
+
 export interface TrackData {
     id: number;
     name: string;
@@ -24,6 +34,7 @@ export interface TrackData {
         x: number;
         z: number;
     }>;
+    repairZone?: TrackRepairZone;
 }
 
 export interface TrackSegmentData {

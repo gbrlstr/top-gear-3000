@@ -20,6 +20,11 @@ export class RoadSegment {
     curve: number;
     colors: RoadColors;
     public isStartLine: boolean = false;
+    public isRepairZone: boolean = false;
+    public repairSide: 'left' | 'right' = 'left';
+    public repairColor: number = 0xff2020;
+    public repairWidth: number = 0.5;
+    public repairHealPerSecond: number = 18;
     public sprites: SpriteObject[] = [];
 
     constructor(index: number, z1: number, z2: number, curve: number, colors: RoadColors) {

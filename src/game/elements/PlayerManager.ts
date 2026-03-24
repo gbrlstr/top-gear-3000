@@ -131,6 +131,13 @@ export class PlayerManager {
         }
     }
 
+    repair(amount: number) {
+        if (this.isBroken || amount <= 0 || this.health >= this.maxHealth) return false;
+
+        this.health = Math.min(this.maxHealth, this.health + amount);
+        return true;
+    }
+
     updateVisuals(time: number, trackManager: TrackManager, camHeight: number) {
         const carColor = 'r01';
         let frameIdx = '00';

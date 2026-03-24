@@ -37,6 +37,7 @@ export class HUDManager {
     private mapBounds = { minX: 0, maxX: 0, minZ: 0, maxZ: 0, width: 0, height: 0 };
 
     public countdownText!: Phaser.GameObjects.Text;
+    public rechargeText!: Phaser.GameObjects.Text;
 
     private countdownTimer: number = 3;
     private currentLap: number = 1;
@@ -106,6 +107,21 @@ export class HUDManager {
             stroke: '#000000',
             strokeThickness: 8
         }).setOrigin(0.5).setDepth(3000);
+
+        this.rechargeText = this.scene.add.text(width / 2, height * 0.16, 'RECHARGE!', {
+            fontFamily: '"Press Start 2P"',
+            fontSize: '52px',
+            color: '#ff5a18',
+            stroke: '#000000',
+            strokeThickness: 10,
+            shadow: {
+                offsetX: 3,
+                offsetY: 3,
+                color: '#000000',
+                blur: 0,
+                fill: true
+            }
+        }).setOrigin(0.5).setDepth(3000).setVisible(false).setScale(0.9, 1);
     }
 
     private updateGraphicalText(container: Phaser.GameObjects.Container, text: string, startX: number, startY: number, scale: number) {
@@ -271,6 +287,19 @@ export class HUDManager {
 
     stopRaceClock() {
         this.isRacing = false;
+    }
+
+    setRechargeVisible(visible: boolean) {
+        this.rechargeText.setVisible(visible);
+        if (!visible) {
+            this.rechargeText.setAlpha(1);
+            this.rechargeText.setScale(0.9, 1);
+            return;
+        }
+
+        const pulse = 0.9 + Math.sin(this.scene.time.now / 90) * 0.04;
+        this.rechargeText.setAlpha(0.8 + Math.sin(this.scene.time.now / 70) * 0.2);
+        this.rechargeText.setScale(pulse, 1 + Math.sin(this.scene.time.now / 90) * 0.03);
     }
 
     setFinish() {

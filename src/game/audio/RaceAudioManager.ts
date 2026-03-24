@@ -7,6 +7,7 @@ export class RaceAudioManager {
     private engineLow?: Phaser.Sound.BaseSound | Phaser.Sound.NoAudioSound;
     private engineMid?: Phaser.Sound.BaseSound | Phaser.Sound.NoAudioSound;
     private engineHigh?: Phaser.Sound.BaseSound | Phaser.Sound.NoAudioSound;
+    private repairLoop?: Phaser.Sound.BaseSound | Phaser.Sound.NoAudioSound;
     private lastCountdownValue: number | null = null;
     private lastCollisionMs = -9999;
     private lastSkidMs = -9999;
@@ -70,13 +71,24 @@ export class RaceAudioManager {
         this.playOneShot('Bonus', 0.5);
     }
 
+    setRepairActive(active: boolean) {
+        if (!active) {
+            this.stopEngineLayer(this.repairLoop);
+            return;
+        }
+
+        this.repairLoop = this.ensureLoop(this.repairLoop, 'Recharge', 0.32);
+    }
+
     destroy() {
         this.stopEngineLayer(this.engineLow);
         this.stopEngineLayer(this.engineMid);
         this.stopEngineLayer(this.engineHigh);
+        this.stopEngineLayer(this.repairLoop);
         this.engineLow = undefined;
         this.engineMid = undefined;
         this.engineHigh = undefined;
+        this.repairLoop = undefined;
 
         if (this.scene.data.get(RaceAudioManager.DATA_KEY) === this) {
             this.scene.data.remove(RaceAudioManager.DATA_KEY);

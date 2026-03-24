@@ -21,6 +21,14 @@ export const track3: TrackData = {
         { length: 60, curve: -3, hill: 0 },
         { length: 75, curve: -5, hill: 0 }
     ],
+    repairZone: {
+        startSegment: 185,
+        endSegment: 310,
+        side: 'right',
+        color: 0xff2020,
+        width: 0.62,
+        healPerSecond: 24
+    },
     trackMapFrame: "track_03",
     trackMapOffset: 0,
     macroPath: [

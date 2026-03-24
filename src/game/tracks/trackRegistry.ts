@@ -44,6 +44,20 @@ function generateRandomSegments(count: number) {
     return segments;
 }
 
+function generateRepairZone(segments: { length: number }[], trackId: number) {
+    const totalSegments = segments.reduce((acc, segment) => acc + segment.length, 0);
+    const startSegment = Math.floor(totalSegments * 0.34);
+
+    return {
+        startSegment,
+        endSegment: Math.min(totalSegments - 1, startSegment + 72),
+        side: trackId % 2 === 0 ? 'left' as const : 'right' as const,
+        color: 0xff2020,
+        width: 0.62,
+        healPerSecond: 24
+    };
+}
+
 export const TRACK_COLLECTION: TrackData[] = [
     track1,
     track2,
@@ -53,12 +67,14 @@ export const TRACK_COLLECTION: TrackData[] = [
 for (let i = 4; i <= 34; i++) {
     const paletteName = PALETTE_NAMES[(i - 1) % PALETTE_NAMES.length];
     const frameNumber = i.toString().padStart(2, '0');
+    const segments = generateRandomSegments(randInt(30, 60));
     
     TRACK_COLLECTION.push({
         id: i,
         name: `${paletteName} Track ${i}`,
         palette: PALETTES[paletteName],
-        segments: generateRandomSegments(randInt(30, 60)),
+        segments,
+        repairZone: generateRepairZone(segments, i),
         trackMapFrame: `track_${frameNumber}`,
         trackMapOffset: 0
     });

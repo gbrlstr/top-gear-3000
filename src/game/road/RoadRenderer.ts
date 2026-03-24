@@ -44,6 +44,21 @@ export class RoadRenderer {
             // Desenha o asfalto base sempre para garantir que não haja vácuo
             this.drawPolygon(graphics, segment.colors.road, p1.x, p1.y, p1.w, p2.x, p2.y - 1, p2.w);
 
+            if (segment.isRepairZone) {
+                this.drawRoadHalf(
+                    graphics,
+                    segment.repairColor,
+                    p1.x,
+                    p1.y,
+                    p1.w,
+                    p2.x,
+                    p2.y - 1,
+                    p2.w,
+                    segment.repairSide,
+                    segment.repairWidth
+                );
+            }
+
             if (segment.isStartLine) {
                 // 1. Base branca (obrigatória)
                 this.drawPolygon(graphics, 0xffffff, p1.x, p1.y, p1.w, p2.x, p2.y - 1, p2.w);
@@ -150,6 +165,32 @@ export class RoadRenderer {
         g.lineTo(x2 - w2, y2);
         g.lineTo(x2 + w2, y2);
         g.lineTo(x1 + w1, y1);
+        g.closePath();
+        g.fillPath();
+    }
+
+    private static drawRoadHalf(
+        g: Phaser.GameObjects.Graphics,
+        color: number,
+        x1: number,
+        y1: number,
+        w1: number,
+        x2: number,
+        y2: number,
+        w2: number,
+        side: 'left' | 'right',
+        widthPercent: number
+    ) {
+        const width = Phaser.Math.Clamp(widthPercent, 0.1, 1);
+        const leftStartRatio = side === 'left' ? -1 : 1 - width * 2;
+        const leftEndRatio = side === 'left' ? -1 + width * 2 : 1;
+
+        g.fillStyle(color);
+        g.beginPath();
+        g.moveTo(x1 + w1 * leftStartRatio, y1);
+        g.lineTo(x2 + w2 * leftStartRatio, y2);
+        g.lineTo(x2 + w2 * leftEndRatio, y2);
+        g.lineTo(x1 + w1 * leftEndRatio, y1);
         g.closePath();
         g.fillPath();
     }

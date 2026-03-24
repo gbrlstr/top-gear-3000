@@ -81,6 +81,29 @@ export class TrackManager {
         };
     }
 
+    public getRepairSegmentAt(z: number) {
+        const segment = this.getSegment(z);
+        return segment.isRepairZone ? segment : null;
+    }
+
+    public isPlayerOnRepairZone(z: number, x: number) {
+        const segment = this.getRepairSegmentAt(z);
+        if (!segment) return null;
+
+        const normalizedX = Phaser.Math.Clamp(x, -1, 1);
+        const width = Phaser.Math.Clamp(segment.repairWidth, 0.1, 1);
+
+        const isOnRepairSide = segment.repairSide === 'left'
+            ? normalizedX <= (-1 + width * 2)
+            : normalizedX >= (1 - width * 2);
+
+        if (!isOnRepairSide) return null;
+
+        return {
+            healPerSecond: segment.repairHealPerSecond
+        };
+    }
+
     private buildTrack(data: TrackData) {
         let z = 0;
         let y = 0;
@@ -131,6 +154,18 @@ export class TrackManager {
                         this.startLineStartZ = segment.p1.world.z;
                     }
                     this.startLineEndZ = segment.p2.world.z;
+                }
+
+                if (
+                    data.repairZone &&
+                    segmentIndex >= data.repairZone.startSegment &&
+                    segmentIndex <= data.repairZone.endSegment
+                ) {
+                    segment.isRepairZone = true;
+                    segment.repairSide = data.repairZone.side;
+                    segment.repairColor = data.repairZone.color ?? 0xff2020;
+                    segment.repairWidth = data.repairZone.width ?? 0.5;
+                    segment.repairHealPerSecond = data.repairZone.healPerSecond ?? 18;
                 }
 
                 segment.p1.world.y = y;
@@ -222,10 +257,7 @@ export class TrackManager {
     }
 
     public getSegment(z: number): RoadSegment {
-        // Encontra o index do segmento baseado no Z (assumindo segmentLength fixo de 200 ou calculado)
-        // No RoadManager original o segmentLength é 200 (veja track1.ts)
-        const segmentLength = 200;
-        const index = Math.floor(z / segmentLength) % this.segments.length;
+        const index = Math.floor(z / this.segmentLength) % this.segments.length;
         return this.segments[index < 0 ? 0 : index];
     }
 }

@@ -69,6 +69,7 @@ export class Preloader extends Scene {
         this.load.audio('Skid', 'sounds/effects/Skid.wav');
         this.load.audio('LowEnergy', 'sounds/effects/Low Energy.wav');
         this.load.audio('Nitro', 'sounds/effects/Nitro Boost.wav');
+        this.load.audio('Recharge', 'sounds/effects/Recharge.wav');
         this.load.audio('Turbo', 'sounds/effects/Nitro Boost 2.wav');
         this.load.audio('Repair', 'sounds/effects/Repair.wav');
     }
