@@ -44,15 +44,29 @@ function generateRandomSegments(count: number) {
     return segments;
 }
 
+function generateRechargeZone(segments: { length: number }[], trackId: number) {
+    const totalSegments = segments.reduce((acc, segment) => acc + segment.length, 0);
+    const startSegment = Math.floor(totalSegments * 0.2);
+
+    return {
+        startSegment,
+        endSegment: Math.min(totalSegments - 1, startSegment + 64),
+        side: trackId % 2 === 0 ? 'left' as const : 'right' as const,
+        color: 0xff2020,
+        width: 0.48,
+        refuelPerSecond: 28
+    };
+}
+
 function generateRepairZone(segments: { length: number }[], trackId: number) {
     const totalSegments = segments.reduce((acc, segment) => acc + segment.length, 0);
-    const startSegment = Math.floor(totalSegments * 0.34);
+    const startSegment = Math.floor(totalSegments * 0.48);
 
     return {
         startSegment,
         endSegment: Math.min(totalSegments - 1, startSegment + 72),
-        side: trackId % 2 === 0 ? 'left' as const : 'right' as const,
-        color: 0xff2020,
+        side: trackId % 2 === 0 ? 'right' as const : 'left' as const,
+        color: 0x2a8cff,
         width: 0.62,
         healPerSecond: 24
     };
@@ -74,6 +88,7 @@ for (let i = 4; i <= 34; i++) {
         name: `${paletteName} Track ${i}`,
         palette: PALETTES[paletteName],
         segments,
+        rechargeZone: generateRechargeZone(segments, i),
         repairZone: generateRepairZone(segments, i),
         trackMapFrame: `track_${frameNumber}`,
         trackMapOffset: 0

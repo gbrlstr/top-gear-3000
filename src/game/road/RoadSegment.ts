@@ -20,9 +20,14 @@ export class RoadSegment {
     curve: number;
     colors: RoadColors;
     public isStartLine: boolean = false;
+    public isRechargeZone: boolean = false;
+    public rechargeSide: 'left' | 'right' = 'left';
+    public rechargeColor: number = 0xff2020;
+    public rechargeWidth: number = 0.5;
+    public rechargeRefuelPerSecond: number = 26;
     public isRepairZone: boolean = false;
     public repairSide: 'left' | 'right' = 'left';
-    public repairColor: number = 0xff2020;
+    public repairColor: number = 0x2a8cff;
     public repairWidth: number = 0.5;
     public repairHealPerSecond: number = 18;
     public sprites: SpriteObject[] = [];

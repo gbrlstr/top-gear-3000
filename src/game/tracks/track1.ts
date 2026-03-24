@@ -25,11 +25,19 @@ export const track1: TrackData = {
         // Curva 4 (Canto Inferior Esquerdo)
         { length: 30, curve: 8, hill: 0 }
     ],
+    rechargeZone: {
+        startSegment: 92,
+        endSegment: 148,
+        side: 'right',
+        color: 0xff2020,
+        width: 0.42,
+        refuelPerSecond: 30
+    },
     repairZone: {
         startSegment: 130,
         endSegment: 225,
         side: 'left',
-        color: 0xff2020,
+        color: 0x2a8cff,
         width: 0.5,
         healPerSecond: 24
     },

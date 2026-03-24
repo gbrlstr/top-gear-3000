@@ -7,6 +7,15 @@ export interface TrackPalette {
     lane?: number;
 }
 
+export interface TrackRechargeZone {
+    startSegment: number;
+    endSegment: number;
+    side: 'left' | 'right';
+    color?: number;
+    width?: number;
+    refuelPerSecond?: number;
+}
+
 export interface TrackRepairZone {
     startSegment: number;
     endSegment: number;
@@ -34,6 +43,7 @@ export interface TrackData {
         x: number;
         z: number;
     }>;
+    rechargeZone?: TrackRechargeZone;
     repairZone?: TrackRepairZone;
 }
 

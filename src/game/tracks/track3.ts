@@ -21,11 +21,19 @@ export const track3: TrackData = {
         { length: 60, curve: -3, hill: 0 },
         { length: 75, curve: -5, hill: 0 }
     ],
+    rechargeZone: {
+        startSegment: 92,
+        endSegment: 160,
+        side: 'left',
+        color: 0xff2020,
+        width: 0.46,
+        refuelPerSecond: 28
+    },
     repairZone: {
         startSegment: 185,
         endSegment: 310,
         side: 'right',
-        color: 0xff2020,
+        color: 0x2a8cff,
         width: 0.62,
         healPerSecond: 24
     },

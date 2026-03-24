@@ -43,6 +43,7 @@ export class HUDManager {
 
     public countdownText!: Phaser.GameObjects.Text;
     public rechargeText!: Phaser.GameObjects.Text;
+    public repairText!: Phaser.GameObjects.Text;
 
     private countdownTimer: number = 3;
     private currentLap: number = 1;
@@ -159,6 +160,21 @@ export class HUDManager {
                 fill: true
             }
         }).setOrigin(0.5).setDepth(3000).setVisible(false).setScale(0.9, 1);
+
+        this.repairText = this.scene.add.text(width / 2, height * 0.16 + 54, 'REPAIR!', {
+            fontFamily: '"Press Start 2P"',
+            fontSize: '44px',
+            color: '#55c8ff',
+            stroke: '#000000',
+            strokeThickness: 10,
+            shadow: {
+                offsetX: 3,
+                offsetY: 3,
+                color: '#000000',
+                blur: 0,
+                fill: true
+            }
+        }).setOrigin(0.5).setDepth(3000).setVisible(false).setScale(0.92, 1);
     }
 
     private updateGraphicalText(container: Phaser.GameObjects.Container, text: string, startX: number, startY: number, scale: number) {
@@ -344,16 +360,30 @@ export class HUDManager {
     }
 
     setRechargeVisible(visible: boolean) {
-        this.rechargeText.setVisible(visible);
+        this.updateZoneText(this.rechargeText, visible, 0.9, 90, 70);
+    }
+
+    setRepairVisible(visible: boolean) {
+        this.updateZoneText(this.repairText, visible, 0.92, 105, 80);
+    }
+
+    private updateZoneText(
+        text: Phaser.GameObjects.Text,
+        visible: boolean,
+        baseScale: number,
+        pulseDivisor: number,
+        alphaDivisor: number
+    ) {
+        text.setVisible(visible);
         if (!visible) {
-            this.rechargeText.setAlpha(1);
-            this.rechargeText.setScale(0.9, 1);
+            text.setAlpha(1);
+            text.setScale(baseScale, 1);
             return;
         }
 
-        const pulse = 0.9 + Math.sin(this.scene.time.now / 90) * 0.04;
-        this.rechargeText.setAlpha(0.8 + Math.sin(this.scene.time.now / 70) * 0.2);
-        this.rechargeText.setScale(pulse, 1 + Math.sin(this.scene.time.now / 90) * 0.03);
+        const pulse = baseScale + Math.sin(this.scene.time.now / pulseDivisor) * 0.04;
+        text.setAlpha(0.8 + Math.sin(this.scene.time.now / alphaDivisor) * 0.2);
+        text.setScale(pulse, 1 + Math.sin(this.scene.time.now / pulseDivisor) * 0.03);
     }
 
     setFinish() {

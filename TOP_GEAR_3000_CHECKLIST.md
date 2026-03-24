@@ -29,17 +29,17 @@ Usar este arquivo como checklist vivo para acompanhar:
 
 - [ ] Dificuldade afeta o menu, mas ainda nao altera a progressao real do campeonato
 - [ ] Existe sistema de pontos, mas a tabela do Championship original ainda precisa ser validada
-- [ ] A interface usa o conceito de `RECHARGE`, mas a logica atual esta ligada apenas a reparo
+- [x] A interface usa o conceito de `RECHARGE`, e agora a logica foi separada de `REPAIR`
 - [ ] Ha varias pistas geradas/registradas, mas o conjunto ainda nao representa o campeonato original completo
 
 ## Checklist de Ajustes Prioritarios
 
 ### 1. Regras de pista: Repair x Recharge
 
-- [ ] Separar corretamente faixa vermelha e faixa azul
-- [ ] Fazer a faixa vermelha recarregar combustivel
-- [ ] Fazer a faixa azul reparar a estrutura do carro
-- [ ] Ajustar HUD, efeitos sonoros e feedback visual para refletir essa separacao
+- [x] Separar corretamente faixa vermelha e faixa azul
+- [x] Fazer a faixa vermelha recarregar combustivel
+- [x] Fazer a faixa azul reparar a estrutura do carro
+- [x] Ajustar HUD, efeitos sonoros e feedback visual para refletir essa separacao
 
 ### 2. Economia do Championship
 

@@ -81,9 +81,32 @@ export class TrackManager {
         };
     }
 
+    public getRechargeSegmentAt(z: number) {
+        const segment = this.getSegment(z);
+        return segment.isRechargeZone ? segment : null;
+    }
+
     public getRepairSegmentAt(z: number) {
         const segment = this.getSegment(z);
         return segment.isRepairZone ? segment : null;
+    }
+
+    public isPlayerOnRechargeZone(z: number, x: number) {
+        const segment = this.getRechargeSegmentAt(z);
+        if (!segment) return null;
+
+        const normalizedX = Phaser.Math.Clamp(x, -1, 1);
+        const width = Phaser.Math.Clamp(segment.rechargeWidth, 0.1, 1);
+
+        const isOnRechargeSide = segment.rechargeSide === 'left'
+            ? normalizedX <= (-1 + width * 2)
+            : normalizedX >= (1 - width * 2);
+
+        if (!isOnRechargeSide) return null;
+
+        return {
+            refuelPerSecond: segment.rechargeRefuelPerSecond
+        };
     }
 
     public isPlayerOnRepairZone(z: number, x: number) {
@@ -157,13 +180,25 @@ export class TrackManager {
                 }
 
                 if (
+                    data.rechargeZone &&
+                    segmentIndex >= data.rechargeZone.startSegment &&
+                    segmentIndex <= data.rechargeZone.endSegment
+                ) {
+                    segment.isRechargeZone = true;
+                    segment.rechargeSide = data.rechargeZone.side;
+                    segment.rechargeColor = data.rechargeZone.color ?? 0xff2020;
+                    segment.rechargeWidth = data.rechargeZone.width ?? 0.5;
+                    segment.rechargeRefuelPerSecond = data.rechargeZone.refuelPerSecond ?? 26;
+                }
+
+                if (
                     data.repairZone &&
                     segmentIndex >= data.repairZone.startSegment &&
                     segmentIndex <= data.repairZone.endSegment
                 ) {
                     segment.isRepairZone = true;
                     segment.repairSide = data.repairZone.side;
-                    segment.repairColor = data.repairZone.color ?? 0xff2020;
+                    segment.repairColor = data.repairZone.color ?? 0x2a8cff;
                     segment.repairWidth = data.repairZone.width ?? 0.5;
                     segment.repairHealPerSecond = data.repairZone.healPerSecond ?? 18;
                 }

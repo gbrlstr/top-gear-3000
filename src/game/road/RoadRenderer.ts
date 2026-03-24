@@ -45,11 +45,31 @@ export class RoadRenderer {
             // Desenha o asfalto base sempre para garantir que não haja vácuo
             this.drawPolygon(graphics, segment.colors.road, p1.x, p1.y, p1.w, p2.x, p2.y - 1, p2.w);
 
+            if (segment.isRechargeZone) {
+                const pulse = 0.5 + 0.5 * Math.sin((timeMs + segment.index * 35) / 160);
+                const rechargeColor = this.getPulsingZoneColor(segment.rechargeColor, 0xff9a3a, pulse);
+
+                this.drawZoneBand(
+                    graphics,
+                    rechargeColor,
+                    p1.x,
+                    p1.y,
+                    p1.w,
+                    p2.x,
+                    p2.y - 1,
+                    p2.w,
+                    segment.rechargeSide,
+                    segment.rechargeWidth,
+                    0xff7a3a,
+                    pulse
+                );
+            }
+
             if (segment.isRepairZone) {
                 const pulse = 0.5 + 0.5 * Math.sin((timeMs + segment.index * 35) / 160);
-                const repairColor = this.getPulsingRepairColor(segment.repairColor, pulse);
+                const repairColor = this.getPulsingZoneColor(segment.repairColor, 0x8fe0ff, pulse);
 
-                this.drawRoadHalf(
+                this.drawZoneBand(
                     graphics,
                     repairColor,
                     p1.x,
@@ -59,21 +79,9 @@ export class RoadRenderer {
                     p2.y - 1,
                     p2.w,
                     segment.repairSide,
-                    segment.repairWidth
-                );
-
-                this.drawRoadHalf(
-                    graphics,
-                    0xff7a3a,
-                    p1.x,
-                    p1.y,
-                    p1.w,
-                    p2.x,
-                    p2.y - 1,
-                    p2.w,
-                    segment.repairSide,
-                    Math.max(0.14, segment.repairWidth * (0.18 + pulse * 0.12)),
-                    0.22 + pulse * 0.18
+                    segment.repairWidth,
+                    0xd8f5ff,
+                    pulse
                 );
             }
 
@@ -214,9 +222,39 @@ export class RoadRenderer {
         g.fillPath();
     }
 
-    private static getPulsingRepairColor(baseColor: number, pulse: number) {
+    private static drawZoneBand(
+        g: Phaser.GameObjects.Graphics,
+        color: number,
+        x1: number,
+        y1: number,
+        w1: number,
+        x2: number,
+        y2: number,
+        w2: number,
+        side: 'left' | 'right',
+        widthPercent: number,
+        stripeColor: number,
+        pulse: number
+    ) {
+        this.drawRoadHalf(g, color, x1, y1, w1, x2, y2, w2, side, widthPercent);
+        this.drawRoadHalf(
+            g,
+            stripeColor,
+            x1,
+            y1,
+            w1,
+            x2,
+            y2,
+            w2,
+            side,
+            Math.max(0.14, widthPercent * (0.18 + pulse * 0.12)),
+            0.22 + pulse * 0.18
+        );
+    }
+
+    private static getPulsingZoneColor(baseColor: number, glowColor: number, pulse: number) {
         const base = Phaser.Display.Color.IntegerToColor(baseColor);
-        const glow = new Phaser.Display.Color(255, 110, 40);
+        const glow = Phaser.Display.Color.IntegerToColor(glowColor);
         const mixed = Phaser.Display.Color.Interpolate.ColorWithColor(
             base,
             glow,

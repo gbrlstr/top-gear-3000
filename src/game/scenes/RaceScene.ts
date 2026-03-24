@@ -110,7 +110,9 @@ export class RaceScene extends Scene {
 
         if (!this.isRacing) {
             this.raceAudio.setRepairActive(false);
+            this.raceAudio.setRechargeActive(false);
             this.hudManager.setRechargeVisible(false);
+            this.hudManager.setRepairVisible(false);
             const playerWorldZ = this.getPlayerWorldZ();
             const countdownFinished = this.hudManager.updateCountdown(dt);
 
@@ -206,7 +208,7 @@ export class RaceScene extends Scene {
         }
 
         if (!this.playerFinished && this.isRacing) {
-            this.handleRepairZone(playerWorldZ, dt);
+            this.handleSupportZones(playerWorldZ, dt);
         }
 
         if (!this.playerFinished && crossedFinishLine) {
@@ -300,18 +302,24 @@ export class RaceScene extends Scene {
         return ((worldZ % trackLength) + trackLength) % trackLength;
     }
 
-    private handleRepairZone(playerWorldZ: number, dt: number) {
+    private handleSupportZones(playerWorldZ: number, dt: number) {
+        const recharge = this.trackManager.isPlayerOnRechargeZone(playerWorldZ, this.playerManager.x);
         const repair = this.trackManager.isPlayerOnRepairZone(playerWorldZ, this.playerManager.x);
-        if (!repair) {
-            this.raceAudio.setRepairActive(false);
-            this.hudManager.setRechargeVisible(false);
-            return;
+        const isRecharging = Boolean(recharge);
+        const isRepairing = Boolean(repair);
+
+        this.raceAudio.setRechargeActive(isRecharging);
+        this.raceAudio.setRepairActive(isRepairing);
+        this.hudManager.setRechargeVisible(isRecharging);
+        this.hudManager.setRepairVisible(isRepairing);
+
+        if (recharge) {
+            this.playerManager.refuel(recharge.refuelPerSecond * dt);
         }
 
-        this.raceAudio.setRepairActive(true);
-        this.hudManager.setRechargeVisible(true);
-
-        this.playerManager.repair(repair.healPerSecond * dt);
+        if (repair) {
+            this.playerManager.repair(repair.healPerSecond * dt);
+        }
     }
 
     private didPlayerCrossFinishLine(previousWorldZ: number, currentWorldZ: number) {
@@ -362,7 +370,9 @@ export class RaceScene extends Scene {
         this.playerFinishTime ??= this.hudManager.getRaceTime();
         this.finishCameraDeadlineMs = this.time.now + RaceScene.MAX_CAMERA_DEADLINE_MS;
         this.raceAudio.setRepairActive(false);
+        this.raceAudio.setRechargeActive(false);
         this.hudManager.setRechargeVisible(false);
+        this.hudManager.setRepairVisible(false);
         this.playerManager.speed = 0;
         this.playerManager.vehicle.setVisible(false);
         this.hudManager.setFinish();
